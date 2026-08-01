@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Share banner source — 1200 × 630</title>
+<!--
+  Source for assets/images/og-banner.jpg — the picture WhatsApp, Facebook,
+  Telegram and iMessage show when the link is shared.
+
+  Regenerate after editing:   node tools/make-banner.js
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400&family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Great+Vibes&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --wine-700:#7A1B2E; --wine-800:#5C1224;
+    --gold-300:#C9A96A; --gold-500:#A8873F;
+    --ink-soft:#6B4A42;
+    --gold-grad:linear-gradient(135deg,#F3E3BC 0%,#C9A96A 28%,#8E6F2F 52%,#E7D2A0 74%,#B79553 100%);
+    --pattern:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%23A8873F' stroke-width='1' opacity='.20'%3E%3Cpath d='M36 8 44 20 58 22 50 33 53 47 36 41 19 47 22 33 14 22 28 20Z'/%3E%3Crect x='24' y='24' width='24' height='24' transform='rotate(45 36 36)'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    width:1200px;height:630px;overflow:hidden;
+    font-family:"Cormorant Garamond",serif;
+    background:radial-gradient(120% 100% at 30% 0%,#FFFDF8 0%,#F7F1E8 45%,#EDE0CB 100%);
+    position:relative;
+  }
+  .pattern{position:absolute;inset:0;background-image:var(--pattern);opacity:.5;}
+  .frame{
+    position:absolute;inset:22px;
+    border:2px solid rgba(168,135,63,.6);
+    outline:1px solid rgba(168,135,63,.28);outline-offset:7px;
+  }
+  .corner{position:absolute;width:54px;height:54px;border:3px solid var(--gold-500);opacity:.85;}
+  .c1{top:-2px;left:-2px;border-right:0;border-bottom:0;}
+  .c2{top:-2px;right:-2px;border-left:0;border-bottom:0;}
+  .c3{bottom:-2px;left:-2px;border-right:0;border-top:0;}
+  .c4{bottom:-2px;right:-2px;border-left:0;border-top:0;}
+
+  .row{position:relative;height:100%;display:flex;align-items:center;gap:56px;padding:0 74px;}
+
+  /* portrait in the same onion arch as the site */
+  .photo{position:relative;flex:0 0 328px;height:452px;}
+  .photo::before{
+    content:"";position:absolute;inset:-26px -34px;
+    background:radial-gradient(circle,rgba(201,169,106,.34) 0%,rgba(201,169,106,0) 68%);
+  }
+  .arch{
+    position:relative;width:100%;height:100%;
+    clip-path:url(#clipArch);
+    background:var(--gold-grad);padding:5px;
+    filter:drop-shadow(0 22px 40px rgba(62,10,24,.34));
+  }
+  .arch img{width:100%;height:100%;object-fit:cover;object-position:50% 16%;clip-path:url(#clipArch);display:block;}
+
+  .text{flex:1;text-align:center;}
+  .bismillah{font-family:"Amiri",serif;font-size:26px;color:var(--wine-700);margin-bottom:14px;}
+  .eyebrow{
+    font-family:"Cinzel",serif;font-size:15px;letter-spacing:.42em;text-indent:.42em;
+    text-transform:uppercase;color:var(--gold-500);margin-bottom:16px;
+  }
+  .name{
+    font-family:"Great Vibes",cursive;font-size:76px;line-height:1.1;
+    background:linear-gradient(120deg,#8B1E3F,#5C1224 45%,#8B1E3F);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .weds{
+    display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0;
+    font-family:"Cinzel",serif;font-size:16px;letter-spacing:.4em;text-indent:.4em;
+    text-transform:uppercase;color:var(--gold-500);
+  }
+  .weds i{display:block;width:74px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-300));}
+  .weds i:last-child{background:linear-gradient(90deg,var(--gold-300),transparent);}
+
+  .rule{display:flex;align-items:center;justify-content:center;gap:12px;margin:26px 0 20px;}
+  .rule i{display:block;width:96px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-300));}
+  .rule i:last-child{background:linear-gradient(90deg,var(--gold-300),transparent);}
+  .rule span{color:var(--gold-300);font-size:15px;}
+
+  .date{
+    font-family:"Cinzel",serif;font-size:23px;letter-spacing:.19em;
+    color:var(--wine-700);margin-bottom:11px;
+  }
+  .place{font-size:25px;font-style:italic;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <clipPath id="clipArch" clipPathUnits="objectBoundingBox">
+        <path d="M0,1 L0,0.52 C0,0.30 0.11,0.20 0.30,0.15 C0.41,0.115 0.485,0.06 0.5,0
+                 C0.515,0.06 0.59,0.115 0.70,0.15 C0.89,0.20 1,0.30 1,0.52 L1,1 Z" />
+      </clipPath>
+    </defs>
+  </svg>
+
+  <div class="pattern"></div>
+  <div class="frame"><i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i></div>
+
+  <div class="row">
+    <div class="photo">
+      <div class="arch"><img src="../assets/images/couple.jpeg" alt="" /></div>
+    </div>
+
+    <div class="text">
+      <p class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+      <p class="eyebrow">Together with our families</p>
+      <p class="name">Muhammed Ashiq</p>
+      <p class="weds"><i></i>weds<i></i></p>
+      <p class="name">Fathima Sherin</p>
+      <p class="rule"><i></i><span>&#10022;</span><i></i></p>
+      <p class="date">18 &amp; 19 DECEMBER 2026</p>
+      <p class="place">KMK Auditorium &nbsp;&middot;&nbsp; Karakkuthangadi</p>
+    </div>
+  </div>
+</body>
+</html>

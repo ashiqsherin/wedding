@@ -12,7 +12,7 @@
     clipStart: 13,      // 0:13
     clipEnd: 269,       // 4:29
     volume: 0.55,
-    fadeMs: 2200,
+    fadeMs: 800,        // short fade so the music is audible right after the tap
 
     // Countdown target — Nikkah, 18 Dec 2026, 12:30 IST (UTC+05:30)
     countdownTo: new Date('2026-12-18T12:30:00+05:30'),
@@ -23,140 +23,6 @@
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $  = function (s, c) { return (c || document).querySelector(s); };
   var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
-
-
-  /* ══════════════════════ SOUND EFFECTS (synthesised) ══════════════════════
-     No sfx files needed — everything below is generated with the Web Audio API,
-     so the page stays light and nothing can 404.                              */
-  var SFX = (function () {
-    var ctx = null;
-    var noiseBuf = null;
-
-    function ac() {
-      if (!ctx) {
-        var AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return null;
-        ctx = new AC();
-      }
-      if (ctx.state === 'suspended') ctx.resume();
-      return ctx;
-    }
-
-    function noise(c) {
-      if (noiseBuf) return noiseBuf;
-      var len = c.sampleRate * 2;
-      noiseBuf = c.createBuffer(1, len, c.sampleRate);
-      var d = noiseBuf.getChannelData(0);
-      for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-      return noiseBuf;
-    }
-
-    /* Heavy wooden doors dragging open */
-    function creak() {
-      var c = ac(); if (!c) return;
-      var t = c.currentTime;
-
-      var src = c.createBufferSource();
-      src.buffer = noise(c);
-      src.loop = true;
-
-      var bp = c.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.Q.value = 7;
-      bp.frequency.setValueAtTime(320, t);
-      bp.frequency.exponentialRampToValueAtTime(880, t + 0.9);
-      bp.frequency.exponentialRampToValueAtTime(420, t + 1.9);
-
-      var lfo = c.createOscillator();
-      var lfoGain = c.createGain();
-      lfo.frequency.value = 7.5;
-      lfoGain.gain.value = 140;
-      lfo.connect(lfoGain).connect(bp.frequency);
-
-      var g = c.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.09, t + 0.35);
-      g.gain.setValueAtTime(0.09, t + 1.25);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 2.1);
-
-      src.connect(bp).connect(g).connect(c.destination);
-      src.start(t); lfo.start(t);
-      src.stop(t + 2.2); lfo.stop(t + 2.2);
-    }
-
-    /* Low resonant thud — the doors coming to rest */
-    function thud(delay) {
-      var c = ac(); if (!c) return;
-      var t = c.currentTime + (delay || 0);
-
-      var o = c.createOscillator();
-      o.type = 'sine';
-      o.frequency.setValueAtTime(120, t);
-      o.frequency.exponentialRampToValueAtTime(38, t + 0.5);
-
-      var g = c.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.30, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
-
-      o.connect(g).connect(c.destination);
-      o.start(t); o.stop(t + 0.8);
-    }
-
-    /* Golden shimmer — a rising arpeggio of bell partials */
-    function shimmer(delay) {
-      var c = ac(); if (!c) return;
-      var base = c.currentTime + (delay || 0);
-      // A pentatonic rise: A4 C#5 E5 F#5 A5 C#6
-      var notes = [440, 554.37, 659.25, 739.99, 880, 1108.73];
-
-      notes.forEach(function (f, i) {
-        var t = base + i * 0.085;
-
-        var o = c.createOscillator();
-        o.type = 'sine';
-        o.frequency.value = f;
-
-        var o2 = c.createOscillator();       // shining upper partial
-        o2.type = 'sine';
-        o2.frequency.value = f * 2.76;
-
-        var g  = c.createGain();
-        var g2 = c.createGain();
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.16, t + 0.015);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
-
-        g2.gain.setValueAtTime(0.0001, t);
-        g2.gain.exponentialRampToValueAtTime(0.035, t + 0.01);
-        g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
-
-        o.connect(g).connect(c.destination);
-        o2.connect(g2).connect(c.destination);
-        o.start(t);  o.stop(t + 1.6);
-        o2.start(t); o2.stop(t + 0.7);
-      });
-    }
-
-    /* Tiny tap for the knocker / button presses */
-    function tap() {
-      var c = ac(); if (!c) return;
-      var t = c.currentTime;
-      var o = c.createOscillator();
-      o.type = 'triangle';
-      o.frequency.setValueAtTime(900, t);
-      o.frequency.exponentialRampToValueAtTime(300, t + 0.09);
-      var g = c.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.13, t + 0.008);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-      o.connect(g).connect(c.destination);
-      o.start(t); o.stop(t + 0.2);
-    }
-
-    return { creak: creak, thud: thud, shimmer: shimmer, tap: tap, ctx: ac };
-  })();
-
 
   /* ══════════════════════════ MUSIC ══════════════════════════ */
   var Music = (function () {
@@ -237,7 +103,6 @@
     }
 
     function toggle() {
-      SFX.tap();
       if (el.paused) play(); else pause();
     }
 
@@ -268,27 +133,23 @@
       if (opened) return;
       opened = true;
 
-      SFX.ctx();                 // unlock audio on this user gesture
-      SFX.tap();
-      SFX.creak();
-      SFX.shimmer(0.9);
-      SFX.thud(1.9);
-
-      gate.classList.add('is-open');
+      // Music first — this is the user gesture that permits playback.
       Music.play();
+      gate.classList.add('is-open');
 
-      // Let the page underneath become live as the doors swing.
+      // Let the page underneath become live while the doors are still swinging.
       setTimeout(function () {
         document.body.classList.remove('is-locked');
         document.body.classList.add('is-open');
         page.setAttribute('aria-hidden', 'false');
         window.scrollTo(0, 0);
         startPetals();
-      }, reduceMotion ? 60 : 1400);
+      }, reduceMotion ? 60 : 4800);
 
+      // Matches the gate timeline in css/style.css (fade ends at 7.7s).
       setTimeout(function () {
         gate.remove();
-      }, reduceMotion ? 300 : 3400);
+      }, reduceMotion ? 300 : 7900);
     }
 
     gate.addEventListener('click', open);
@@ -448,7 +309,6 @@
 
     btn.addEventListener('click', function (e) {
       e.preventDefault();
-      SFX.tap();
       var blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');
@@ -460,11 +320,5 @@
       setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     });
   })();
-
-
-  /* ══════════════════ small polish: button taps ══════════════════ */
-  $$('.btn, .foot__top, .hero__scroll').forEach(function (n) {
-    n.addEventListener('click', function () { SFX.tap(); });
-  });
 
 })();

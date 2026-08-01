@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#F5E4B8"/>
+      <stop offset="42%"  stop-color="#D8B673"/>
+      <stop offset="100%" stop-color="#A8843C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- maroon tile -->
+  <rect width="64" height="64" rx="13" fill="#5C1224"/>
+  <rect x="2.5" y="2.5" width="59" height="59" rx="11" fill="none"
+        stroke="#C9A96A" stroke-opacity=".55" stroke-width="1.6"/>
+
+  <!-- the gate: an onion arch, echoing the opening screen -->
+  <path d="M12,50 L12,30.3
+           C12,21.3 16.4,17.2 24,15.15
+           C28.4,13.7 31.4,11.5 32,9
+           C32.6,11.5 35.6,13.7 40,15.15
+           C47.6,17.2 52,21.3 52,30.3
+           L52,50 Z"
+        fill="url(#g)"/>
+
+  <!-- the lantern inside -->
+  <ellipse cx="32" cy="29" rx="4" ry="5.2" fill="#5C1224"/>
+
+  <!-- threshold -->
+  <rect x="9" y="50.5" width="46" height="3.2" rx="1.6" fill="url(#g)"/>
+</svg>

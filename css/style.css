@@ -30,7 +30,8 @@
   --shadow-lg:0 30px 70px -25px rgba(62,10,24,.45);
   --shadow-md:0 16px 40px -20px rgba(62,10,24,.40);
 
-  --ease-door:cubic-bezier(.62,.02,.20,1);
+  /* heavy doors: a little initial resistance, then a long slow settle */
+  --ease-door:cubic-bezier(.28,.08,.20,1);
   --ease-soft:cubic-bezier(.22,.61,.36,1);
 
   --f-display:"Great Vibes",cursive;
@@ -80,7 +81,17 @@ img{display:block;max-width:100%;height:auto;}
   overflow:hidden;
   background:
     radial-gradient(120% 90% at 50% 18%,#FBF6EC 0%,#F2E7D6 42%,#E4D2B7 78%,#D8C09E 100%);
-  transition:opacity .8s ease 1.9s, visibility .8s ease 1.9s;
+  /* ── Gate timeline (all times from the tap) ──────────────
+     0.00s  music starts, caption fades out
+     0.00s  doors begin their 6.5s swing
+     0.60s  lamplight and lantern come up behind the doors
+     4.40s  golden burst blooms through the opening
+     4.40s  the view begins moving through the doorway
+     4.80s  the page underneath goes live (js/main.js)
+     6.50s  the gate itself fades away
+     7.70s  gate removed from the DOM (js/main.js)
+     ──────────────────────────────────────────────────────── */
+  transition:opacity 1.2s ease 6.5s, visibility 1.2s ease 6.5s;
 }
 .gate::before{
   content:"";position:absolute;inset:0;
@@ -111,6 +122,7 @@ img{display:block;max-width:100%;height:auto;}
   transform:translate(-50%,-50%) scale(.2);
   background:radial-gradient(circle,rgba(255,246,219,.92) 0%,rgba(232,196,120,.55) 30%,rgba(201,169,106,0) 66%);
   opacity:0;pointer-events:none;
+  z-index:6;   /* above .gate__inner, or the doorway hides the flash */
 }
 
 .gate__inner{
@@ -153,7 +165,7 @@ img{display:block;max-width:100%;height:auto;}
   width:135%;aspect-ratio:1;transform:translate(-50%,-50%);
   background:radial-gradient(circle,rgba(255,238,196,.92) 0%,rgba(232,186,104,.45) 26%,rgba(140,60,50,0) 60%);
   opacity:0;
-  transition:opacity 1.1s ease .3s;
+  transition:opacity 2.6s ease .6s;
 }
 .doorway__lantern{
   position:absolute;left:50%;top:26%;
@@ -162,7 +174,7 @@ img{display:block;max-width:100%;height:auto;}
   background:linear-gradient(180deg,#FFF0C4,#E2B95E 60%,#A8763A);
   box-shadow:0 0 26px 10px rgba(255,214,140,.55);
   opacity:0;
-  transition:opacity .8s ease .4s;
+  transition:opacity 2.6s ease .9s;
 }
 .doorway__frame{
   position:absolute;inset:-2.2%;
@@ -173,10 +185,14 @@ img{display:block;max-width:100%;height:auto;}
 }
 
 /* ── Door leaves ─────────────────────────────────────── */
+/* The swing is a keyframe animation, not a transition. The idle breathe below
+   also drives `transform`, and a CSS animation always beats a transition on the
+   same property — cancelling the breathe in the same frame as a transform change
+   means Chrome never starts the transition, so the leaves snap open instantly.
+   Animation-replaces-animation has no such problem. */
 .door{
   position:absolute;top:0;bottom:0;width:50.4%;
   transform-style:preserve-3d;
-  transition:transform 2.05s var(--ease-door), filter 2.05s var(--ease-door);
   z-index:3;
   will-change:transform;
 }
@@ -263,8 +279,8 @@ img{display:block;max-width:100%;height:auto;}
 .door--right .door__edge{left:0; transform-origin:left  center;}
 
 /* idle breathing so the gate feels alive before the tap */
-.gate:not(.is-open) .door{animation:doorBreathe 5.5s ease-in-out infinite;}
-.gate:not(.is-open) .door--right{animation-delay:-2.75s;}
+.gate:not(.is-open) .door--left {animation:doorBreathe  5.5s ease-in-out infinite;}
+.gate:not(.is-open) .door--right{animation:doorBreatheR 5.5s ease-in-out infinite -2.75s;}
 
 /* ── Caption below the doorway ───────────────────────── */
 .gate__caption{
@@ -316,20 +332,19 @@ img{display:block;max-width:100%;height:auto;}
 
 /* ── Opening sequence ────────────────────────────────── */
 .gate.is-open{opacity:0;visibility:hidden;}
-.gate.is-open .door--left {transform:rotateY(-112deg) translateZ(6px);filter:brightness(.68);}
-.gate.is-open .door--right{transform:rotateY( 112deg) translateZ(6px);filter:brightness(.68);}
-.gate.is-open .door{animation:none;}
+.gate.is-open .door--left {animation:doorOpenL 6.5s var(--ease-door) forwards;}
+.gate.is-open .door--right{animation:doorOpenR 6.5s var(--ease-door) forwards;}
 .gate.is-open .doorway__light,
 .gate.is-open .doorway__lantern{opacity:1;}
 .gate.is-open .gate__glow{
-  animation:burst 1.8s var(--ease-soft) forwards 1.05s;
+  animation:burst 2.8s var(--ease-soft) forwards 4.4s;
 }
 .gate.is-open .gate__caption,
 .gate.is-open .gate__bismillah{
-  animation:fadeAway .8s ease forwards .25s;
+  animation:fadeAway 1.2s ease forwards .2s;
 }
-/* the camera moves through the open doorway — only once the leaves have swung */
-.gate.is-open .doorway{animation:pullIn 1.7s var(--ease-door) forwards 1.15s;}
+/* the view drifts through the open doorway — once the leaves are well clear */
+.gate.is-open .doorway{animation:pullIn 3.2s var(--ease-door) forwards 4.4s;}
 
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1013,10 +1028,19 @@ section{position:relative;padding:clamp(3.5rem,10vh,7rem) var(--pad);}
   0%,100%{transform:rotateY(0deg);}
   50%    {transform:rotateY(1.6deg);}
 }
-.door--right{animation-name:doorBreatheR;}
 @keyframes doorBreatheR{
   0%,100%{transform:rotateY(0deg);}
   50%    {transform:rotateY(-1.6deg);}
+}
+
+/* the slow swing — heavy leaves easing open over 6.5s */
+@keyframes doorOpenL{
+  from{transform:rotateY(0deg)     translateZ(0);  filter:brightness(1);}
+  to  {transform:rotateY(-112deg)  translateZ(6px);filter:brightness(.68);}
+}
+@keyframes doorOpenR{
+  from{transform:rotateY(0deg)     translateZ(0);  filter:brightness(1);}
+  to  {transform:rotateY(112deg)   translateZ(6px);filter:brightness(.68);}
 }
 
 @keyframes burst{
@@ -1025,8 +1049,9 @@ section{position:relative;padding:clamp(3.5rem,10vh,7rem) var(--pad);}
   100%{opacity:0;transform:translate(-50%,-50%) scale(2.6);}
 }
 @keyframes pullIn{
-  0%  {transform:none;}
-  100%{transform:scale(2.4) translateZ(180px);opacity:0;}
+  0%  {transform:none;opacity:1;}
+  65% {opacity:1;}
+  100%{transform:scale(2.6) translateZ(180px);opacity:0;}
 }
 
 @keyframes halo{0%,100%{opacity:.7;transform:scale(1);}50%{opacity:1;transform:scale(1.06);}}

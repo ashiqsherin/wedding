@@ -13,9 +13,9 @@ That's it — drop the file in and it works. Nothing else needs editing.
 You asked for the section **0:13 → 4:29**. The player already does this in
 JavaScript, so you can drop in the **full-length track** untrimmed:
 
-- playback starts at `0:13`
+- playback starts at `0:13`, the moment the gate is tapped
 - when it reaches `4:29` it loops straight back to `0:13`
-- volume fades in gently over ~2 seconds when the gate opens
+- volume fades in over 0.8s, so it's audible almost immediately
 
 Those numbers live at the top of [`js/main.js`](../../js/main.js):
 
@@ -23,6 +23,7 @@ Those numbers live at the top of [`js/main.js`](../../js/main.js):
 clipStart: 13,   // 0:13
 clipEnd:   269,  // 4:29
 volume:    0.55,
+fadeMs:    800,
 ```
 
 ## If you'd rather pre-trim the file
@@ -50,7 +51,6 @@ share the link on WhatsApp status or Instagram.
 
 ## No music file yet?
 
-The page still works perfectly. The music button just shows a tooltip saying the
-file is missing, and every other sound (the door creak, the golden shimmer, the
-closing thud, button taps) is **synthesised in the browser** with the Web Audio
-API — no files involved, nothing to 404.
+The page still works perfectly — it just opens in silence. The music button
+shows a tooltip saying the file is missing. This is the only audio on the page;
+there are no sound effects.
