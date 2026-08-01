@@ -10,14 +10,22 @@ That's it — drop the file in and it works. Nothing else needs editing.
 
 ## How the clip is handled
 
-You asked for the section **0:13 → 4:29**. The player already does this in
-JavaScript, so you can drop in the **full-length track** untrimmed:
+You asked for the section **0:13 → 4:29**, and the player works out on its own
+which kind of file you gave it — so either works, with nothing to edit:
 
-- playback starts at `0:13`, the moment the gate is tapped
-- when it reaches `4:29` it loops straight back to `0:13`
-- volume fades in over 0.8s, so it's audible almost immediately
+| The file you drop in | What plays |
+|---|---|
+| **Full-length track** | starts at `0:13`, loops back to `0:13` at `4:29` |
+| **Already trimmed** to that section | plays whole, from the first note, loops at the end |
 
-Those numbers live at the top of [`js/main.js`](../../js/main.js):
+It decides by comparing the file's duration against `clipEnd`. A file shorter
+than 4:29 must already be the trimmed clip, so seeking 13s into it would chop
+off music that's meant to be heard — it plays from `0:00` instead.
+
+**The file currently in this folder is the trimmed version** (4:16.7 ≈ 4:29
+minus 0:13), so it plays from its first note.
+
+The numbers live at the top of [`js/main.js`](../../js/main.js):
 
 ```js
 clipStart: 13,   // 0:13
@@ -26,16 +34,25 @@ volume:    0.55,
 fadeMs:    800,
 ```
 
-## If you'd rather pre-trim the file
+Volume fades in over 0.8s from the moment the gate is tapped.
 
-Smaller download for guests on mobile data. With `ffmpeg` (already installed on
-your machine):
+## Trimming it yourself
 
 ```bash
 ffmpeg -i original.mp3 -ss 13 -to 269 -c:a libmp3lame -b:a 128k music.mp3
 ```
 
-Then set `clipStart: 0` and `clipEnd: 256` in `js/main.js`.
+## File size
+
+The current file is **5.7 MB** at 186 kbps. That's a real download for a guest
+on mobile data before they hear anything. Re-encoding costs almost nothing in
+quality for background music on a phone speaker:
+
+```bash
+ffmpeg -i music.mp3 -c:a libmp3lame -b:a 96k music-small.mp3   # ≈ 3.0 MB
+```
+
+Entirely optional — it works fine as it is.
 
 ## About the source track
 

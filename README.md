@@ -58,10 +58,11 @@ To make the swing slower or faster, edit the `6.5s` on the
 
 Only your music file plays — there are no sound effects.
 
-Drop a file at `assets/audio/music.mp3` and it plays the **0:13 → 4:29** section
-on loop, fading in over 0.8s. See
-[`assets/audio/README.md`](assets/audio/README.md). Until you add it, the page
-works normally and the music button just reports the file is missing.
+`assets/audio/music.mp3` plays the **0:13 → 4:29** section on loop, fading in
+over 0.8s. The player detects whether you gave it the full track or a file
+already trimmed to that section and does the right thing either way — see
+[`assets/audio/README.md`](assets/audio/README.md). Remove the file and the page
+still works; the music button just reports it missing.
 
 Browsers only allow audio after a user gesture, so playback starts on the tap
 that opens the gate — that tap is what makes it legal, so it can't start any

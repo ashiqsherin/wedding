@@ -33,15 +33,32 @@
     var available = true;
     var seekTries = 0;
 
+    // Working copies — calibrate() may override these once we know the file.
+    var clipStart = CONFIG.clipStart;
+    var clipEnd = CONFIG.clipEnd;
+
+    /* Adapt to whichever file was actually supplied.
+       A full-length track gets the 0:13 → 4:29 slice. But if the file is
+       shorter than clipEnd it has already been trimmed to that slice, so
+       seeking to 0:13 would chop 13s off music that is meant to play from its
+       first note — in that case play the whole file instead. */
+    function calibrate() {
+      if (!isFinite(el.duration) || el.duration <= 0) return;
+      if (el.duration < CONFIG.clipEnd) {
+        clipStart = 0;
+        clipEnd = el.duration;
+      }
+    }
+
     /* Move to the start of the clip. Bounded retries: if the host can't serve
        byte ranges the seek silently won't take, and retrying on every
        timeupdate would spin the element in a seek → stall → seek loop.
        After a couple of attempts we just let the track play from the top. */
     function seekToStart() {
-      if (seekTries >= 3) return;
-      if (!isFinite(el.duration) || el.duration <= CONFIG.clipStart) return;
+      if (clipStart <= 0 || seekTries >= 3) return;
+      if (!isFinite(el.duration) || el.duration <= clipStart) return;
       seekTries++;
-      try { el.currentTime = CONFIG.clipStart; } catch (e) {}
+      try { el.currentTime = clipStart; } catch (e) {}
     }
 
     function load() {
@@ -57,16 +74,19 @@
         btn.title = 'Music file not found — add assets/audio/music.mp3';
       });
 
-      el.addEventListener('loadedmetadata', seekToStart);
+      el.addEventListener('loadedmetadata', function () {
+        calibrate();
+        seekToStart();
+      });
       el.addEventListener('canplay', function () {
         if (el.currentTime < 1) seekToStart();
       });
 
-      // Wrap back to the start of the clip at 4:29. Only ever seeks backwards
-      // from the end, so it cannot fight a failed seek.
+      // Wrap back to the start of the clip at the out-point. Only ever seeks
+      // backwards from the end, so it cannot fight a failed seek.
       el.addEventListener('timeupdate', function () {
-        if (el.currentTime >= CONFIG.clipEnd) {
-          el.currentTime = CONFIG.clipStart;
+        if (clipEnd > 0 && el.currentTime >= clipEnd) {
+          el.currentTime = clipStart;
         }
       });
     }
