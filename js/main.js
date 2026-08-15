@@ -17,7 +17,11 @@
     // Countdown target — Nikkah, 18 Dec 2026, 12:30 IST (UTC+05:30)
     countdownTo: new Date('2026-12-18T12:30:00+05:30'),
 
-    petalCount: 26
+    petalCount: 26,
+
+    // RSVP. The endpoint URL and submit token live in js/api.js.
+    rsvpMax: 20,                        // largest party the stepper allows
+    rsvpKey: 'ashiq-sherin-rsvp'        // localStorage: "this browser replied"
   };
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -339,6 +343,233 @@
       document.body.removeChild(a);
       setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     });
+  })();
+
+
+  /* ══════════════════════════════ RSVP ══════════════════════════════ */
+  (function () {
+    var card = $('#rsvpCard');
+    if (!card) return;
+
+    var steps  = $$('.rsvp__step', card);
+    var status = $('#rsvpStatus');
+    var numEl  = $('#cntVal');
+    var minus  = $('#cntMinus');
+    var plus   = $('#cntPlus');
+
+    var count = 1;
+    var sending = false;
+    var booted = false;      // the first step must not steal focus on page load
+
+    /* ── the step machine ────────────────────────────────────────
+       Every step is a sibling tagged data-step; `hidden` is the switch, so
+       the inactive ones leave the tab order and the accessibility tree.
+       showStep is the only thing that mutates which step is visible. */
+    function showStep(name) {
+      var shown = null;
+      card.setAttribute('data-step', name);
+      steps.forEach(function (s) {
+        var on = (s.getAttribute('data-step') === name);
+        s.hidden = !on;
+        if (on) shown = s;
+      });
+      say('');
+
+      // Focus the heading, not the first input: focusing an input on a phone
+      // throws the keyboard up over the card before the guest has read it.
+      // Query inside the step itself — card also carries data-step, so a
+      // descendant selector would match every step's heading and return the
+      // first (hidden) one.
+      if (!booted) { booted = true; return; }
+      var head = shown ? $('.rsvp__ask', shown) : null;
+      if (head) head.focus({ preventScroll: true });
+    }
+
+    function say(msg, isError) {
+      status.textContent = msg;
+      status.classList.toggle('is-error', !!isError);
+    }
+
+    /* ── validation ──────────────────────────────────────────── */
+    function setError(input, msg) {
+      var box = $('#' + input.id + 'Err');
+      box.textContent = msg || '';
+      box.hidden = !msg;
+      if (msg) input.setAttribute('aria-invalid', 'true');
+      else input.removeAttribute('aria-invalid');
+      return !msg;
+    }
+
+    function checkName(input) {
+      var v = input.value.trim();
+      if (!v) return setError(input, 'Please tell us your name.');
+      if (v.length < 2) return setError(input, 'That looks a little short.');
+      return setError(input, '');
+    }
+
+    // Digits, spaces, dashes and brackets with one optional leading +, and
+    // between 7 and 15 actual digits (E.164 allows at most 15).
+    function checkPhone(input) {
+      var v = input.value.trim();
+      if (!v) return setError(input, 'Please leave a number so we can reach you.');
+      if (!/^\+?[0-9][0-9\s\-().]*$/.test(v)) {
+        return setError(input, 'Digits, spaces and + only, please.');
+      }
+      var digits = v.replace(/\D/g, '');
+      if (digits.length < 7 || digits.length > 15) {
+        return setError(input, 'That does not look like a phone number.');
+      }
+      return setError(input, '');
+    }
+
+    /* ── the stepper ─────────────────────────────────────────── */
+    // aria-disabled rather than disabled: a disabled button loses focus the
+    // instant it is disabled, so stepping down to 1 from the keyboard would
+    // silently drop you on <body>. setCount clamps, so the click is harmless.
+    function setOff(btn, off) {
+      btn.setAttribute('aria-disabled', off ? 'true' : 'false');
+      btn.classList.toggle('is-off', off);
+    }
+
+    function setCount(n) {
+      var next = Math.min(CONFIG.rsvpMax, Math.max(1, Math.round(n) || 1));
+      var moved = next !== count;
+      count = next;
+      numEl.textContent = String(count);
+      numEl.setAttribute('aria-valuenow', String(count));
+      setOff(minus, count <= 1);
+      setOff(plus, count >= CONFIG.rsvpMax);
+      if (!moved) return;
+      numEl.classList.remove('tick');
+      void numEl.offsetWidth;            // reflow, so the animation restarts
+      numEl.classList.add('tick');
+    }
+
+    minus.addEventListener('click', function () { setCount(count - 1); });
+    plus.addEventListener('click', function () { setCount(count + 1); });
+
+    // Behave like a native spinbutton for anyone on a keyboard.
+    numEl.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (k === 'ArrowUp' || k === 'ArrowRight') setCount(count + 1);
+      else if (k === 'ArrowDown' || k === 'ArrowLeft') setCount(count - 1);
+      else if (k === 'PageUp') setCount(count + 5);
+      else if (k === 'PageDown') setCount(count - 5);
+      else if (k === 'Home') setCount(1);
+      else if (k === 'End') setCount(CONFIG.rsvpMax);
+      else return;
+      e.preventDefault();
+    });
+
+    /* ── "this browser already replied" ──────────────────────── */
+    var store = {
+      read: function () {
+        try { return JSON.parse(localStorage.getItem(CONFIG.rsvpKey) || 'null'); }
+        catch (e) { return null; }       // private mode, or a stale value
+      },
+      write: function (data) {
+        try { localStorage.setItem(CONFIG.rsvpKey, JSON.stringify(data)); }
+        catch (e) {}
+      }
+    };
+
+    /* ── sending ─────────────────────────────────────────────── */
+    function send(payload, btn, onSuccess) {
+      var label = btn.textContent;
+      sending = true;
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      say('');
+
+      function stop() {
+        sending = false;
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+
+      window.RsvpApi.submit(payload, function (err, res) {
+        stop();
+        if (err || !res || res.ok === false) {
+          // Nothing is cleared: every field keeps what was typed and the
+          // count stays put, so retrying is one more tap on the same button.
+          say((res && res.message) ||
+              'We could not send that just now. Check your connection and tap again.',
+              true);
+          return;
+        }
+        onSuccess(res);
+      });
+    }
+
+    /* ── the two forms ───────────────────────────────────────── */
+    function wireForm(form, reply) {
+      var nameIn  = $('[name="name"]', form);
+      var phoneIn = $('[name="phone"]', form);
+      var submit  = $('[type="submit"]', form);
+
+      // Clear an error once the guest starts fixing it — never sooner.
+      [nameIn, phoneIn].forEach(function (input) {
+        input.addEventListener('input', function () {
+          if (input.getAttribute('aria-invalid')) setError(input, '');
+        });
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (sending) return;
+
+        var okName = checkName(nameIn);
+        var okPhone = checkPhone(phoneIn);
+        if (!okName) { nameIn.focus(); return; }
+        if (!okPhone) { phoneIn.focus(); return; }
+
+        var party = reply === 'yes' ? count : 0;
+
+        send({
+          name: nameIn.value.trim(),
+          phone: phoneIn.value.trim(),
+          status: reply,
+          guests: party
+        }, submit, function () {
+          store.write({ name: nameIn.value.trim(), status: reply, count: party });
+          $('#rsvpDoneMsg').textContent = reply === 'yes'
+            ? 'In sha’ Allah we will see you — ' + party +
+              (party > 1 ? ' guests' : ' guest') + ' noted.'
+            : 'Thank you for letting us know. You will be in our du‘a.';
+          form.reset();
+          setCount(1);
+          showStep('done');
+        });
+      });
+    }
+
+    wireForm($('#rsvpFormYes'), 'yes');
+    wireForm($('#rsvpFormNo'), 'no');
+
+    $('#rsvpYes').addEventListener('click', function () { showStep('yes'); });
+    $('#rsvpNo').addEventListener('click', function () { showStep('no'); });
+    $$('[data-back]', card).forEach(function (b) {
+      b.addEventListener('click', function () { showStep('choice'); });
+    });
+    $('#rsvpAgain').addEventListener('click', function () { showStep('choice'); });
+    $('#rsvpSeenAgain').addEventListener('click', function () { showStep('choice'); });
+
+    numEl.setAttribute('aria-valuemax', String(CONFIG.rsvpMax));  // no drift
+    setCount(1);
+
+    /* A guest who already replied gets a calm summary and one button back
+       into the form — no modal, no lock. Families share phones here, so
+       replying a second time has to stay easy. */
+    var seen = store.read();
+    if (seen && seen.name) {
+      $('#rsvpSeenName').textContent = seen.name;
+      $('#rsvpSeenWhat').textContent = seen.status === 'yes'
+        ? 'you are coming with ' + seen.count + (seen.count > 1 ? ' guests' : ' guest')
+        : 'you sent your regrets';
+      showStep('seen');
+    } else {
+      showStep('choice');
+    }
   })();
 
 })();

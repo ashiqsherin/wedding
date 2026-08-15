@@ -629,7 +629,127 @@
   </section>
 
 
-  <!-- ─────────────── 8. DUA / CLOSING ─────────────── -->
+  <!-- ─────────────── 8. RSVP ─────────────── -->
+  <section class="rsvp" id="rsvp">
+    <div class="rsvp__card reveal" id="rsvpCard" data-step="choice">
+
+      <!-- a · the choice -->
+      <div class="rsvp__step" data-step="choice">
+        <h3 class="rsvp__ask" tabindex="-1">Will you attend?</h3>
+        <div class="rsvp__choices">
+          <button class="btn btn--block" type="button" id="rsvpYes">
+            Yes, with joy! <span aria-hidden="true">&#128522;</span>
+          </button>
+          <button class="btn btn--ghost btn--block" type="button" id="rsvpNo">
+            Sorry, I can&rsquo;t make it
+          </button>
+        </div>
+      </div>
+
+      <!-- b · attending -->
+      <form class="rsvp__step" data-step="yes" id="rsvpFormYes" novalidate hidden>
+        <button class="rsvp__back" type="button" data-back>
+          <span aria-hidden="true">&lsaquo;</span> Back
+        </button>
+        <h3 class="rsvp__ask" tabindex="-1">Wonderful!</h3>
+        <p class="rsvp__sub">Your attendance details</p>
+
+        <div class="field">
+          <label class="field__lbl" for="yesName">
+            Your name <span class="field__req">required</span>
+          </label>
+          <input class="field__in" id="yesName" name="name" type="text"
+                 autocomplete="name" maxlength="60" aria-describedby="yesNameErr"
+                 placeholder="Your name" />
+          <p class="field__err" id="yesNameErr" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field__lbl" for="yesPhone">
+            Phone number <span class="field__req">required</span>
+          </label>
+          <input class="field__in" id="yesPhone" name="phone" type="tel"
+                 autocomplete="tel" inputmode="tel" maxlength="22"
+                 aria-describedby="yesPhoneErr" placeholder="+91 98470 00000" />
+          <p class="field__err" id="yesPhoneErr" hidden></p>
+        </div>
+
+        <div class="field field--count">
+          <p class="rsvp__sub rsvp__sub--q" id="cntLbl">How many family members will attend?</p>
+          <div class="stepper">
+            <button class="stepper__btn" type="button" id="cntMinus"
+                    aria-label="One fewer guest">&minus;</button>
+            <span class="stepper__num" id="cntVal" role="spinbutton" tabindex="0"
+                  aria-labelledby="cntLbl" aria-valuemin="1" aria-valuemax="20"
+                  aria-valuenow="1">1</span>
+            <button class="stepper__btn" type="button" id="cntPlus"
+                    aria-label="One more guest">+</button>
+          </div>
+          <p class="stepper__cap">Including yourself</p>
+        </div>
+
+        <button class="btn btn--block" type="submit">Confirm attendance</button>
+      </form>
+
+      <!-- c · regrets -->
+      <form class="rsvp__step" data-step="no" id="rsvpFormNo" novalidate hidden>
+        <button class="rsvp__back" type="button" data-back>
+          <span aria-hidden="true">&lsaquo;</span> Back
+        </button>
+        <h3 class="rsvp__ask" tabindex="-1">We&rsquo;ll miss you</h3>
+        <p class="rsvp__sub">Do leave your name so we know who to keep in our du&lsquo;a.</p>
+
+        <div class="field">
+          <label class="field__lbl" for="noName">
+            Your name <span class="field__req">required</span>
+          </label>
+          <input class="field__in" id="noName" name="name" type="text"
+                 autocomplete="name" maxlength="60" aria-describedby="noNameErr"
+                 placeholder="Your name" />
+          <p class="field__err" id="noNameErr" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field__lbl" for="noPhone">
+            Phone number <span class="field__req">required</span>
+          </label>
+          <input class="field__in" id="noPhone" name="phone" type="tel"
+                 autocomplete="tel" inputmode="tel" maxlength="22"
+                 aria-describedby="noPhoneErr" placeholder="+91 98470 00000" />
+          <p class="field__err" id="noPhoneErr" hidden></p>
+        </div>
+
+        <button class="btn btn--ghost btn--block" type="submit">Send regrets</button>
+      </form>
+
+      <!-- d · thank you -->
+      <div class="rsvp__step" data-step="done" hidden>
+        <span class="rsvp__mark" aria-hidden="true">&#10047;</span>
+        <h3 class="rsvp__ask" tabindex="-1">Jazakumullahu Khairan</h3>
+        <p class="rsvp__sub" id="rsvpDoneMsg"></p>
+        <button class="btn btn--ghost btn--block" type="button" id="rsvpAgain">
+          Reply for another family
+        </button>
+      </div>
+
+      <!-- e · returning guest -->
+      <div class="rsvp__step" data-step="seen" hidden>
+        <span class="rsvp__mark" aria-hidden="true">&#10047;</span>
+        <h3 class="rsvp__ask" tabindex="-1">You&rsquo;ve already responded</h3>
+        <p class="rsvp__sub">
+          Thank you, <b id="rsvpSeenName"></b> &mdash; <span id="rsvpSeenWhat"></span>.
+        </p>
+        <button class="btn btn--ghost btn--block" type="button" id="rsvpSeenAgain">
+          Reply for another family
+        </button>
+      </div>
+
+      <p class="rsvp__status" id="rsvpStatus" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+
+  <!-- ─────────────── 9. DUA / CLOSING ─────────────── -->
   <section class="dua" id="dua">
     <div class="dua__inner reveal">
       <span class="dua__mark" aria-hidden="true">&#10047;</span>
@@ -648,7 +768,7 @@
   </section>
 
 
-  <!-- ─────────────── 9. FOOTER ─────────────── -->
+  <!-- ─────────────── 10. FOOTER ─────────────── -->
   <footer class="foot">
     <p class="foot__names">Ashiq <span>&amp;</span> Sherin</p>
     <p class="foot__line">18 &amp; 19 December 2026 &nbsp;&middot;&nbsp; Karakkuthangadi</p>
@@ -657,6 +777,7 @@
 
 </main>
 
+<script src="js/api.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

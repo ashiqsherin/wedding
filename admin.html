@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>R.S.V.P. Responses — Ashiq &amp; Sherin</title>
+<meta name="theme-color" content="#5C1224" />
+
+<!-- Not an invitation. Keep it out of search results and out of link previews. -->
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="no-referrer" />
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Great+Vibes&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<main class="adm">
+  <header class="adm__head">
+    <p class="adm__kicker">Ashiq &amp; Sherin</p>
+    <h1 class="adm__title">R.S.V.P. Responses</h1>
+  </header>
+
+  <form class="adm__login" id="admLogin" novalidate>
+    <div class="field">
+      <label class="field__lbl" for="admUser">Username</label>
+      <input class="field__in" id="admUser" name="user" type="text"
+             autocomplete="username" aria-describedby="admUserErr" />
+      <p class="field__err" id="admUserErr" hidden></p>
+    </div>
+    <div class="field">
+      <label class="field__lbl" for="admPass">Password</label>
+      <input class="field__in" id="admPass" name="pass" type="password"
+             autocomplete="current-password" aria-describedby="admPassErr" />
+      <p class="field__err" id="admPassErr" hidden></p>
+    </div>
+    <button class="btn btn--block" type="submit" id="admGo">Sign in</button>
+  </form>
+
+  <section class="adm__panel" id="admPanel" hidden>
+    <div class="adm__stats">
+      <div class="stat">
+        <b class="stat__num" id="statYes">0</b><span class="stat__lbl">Attending</span>
+      </div>
+      <div class="stat">
+        <b class="stat__num" id="statGuests">0</b><span class="stat__lbl">Total guests</span>
+      </div>
+      <div class="stat">
+        <b class="stat__num" id="statNo">0</b><span class="stat__lbl">Declined</span>
+      </div>
+    </div>
+
+    <div class="adm__bar">
+      <button class="btn btn--ghost" type="button" id="admRefresh">Refresh</button>
+      <button class="btn" type="button" id="admCsv">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4M4 20h16"/></svg>
+        Export CSV
+      </button>
+      <button class="btn btn--ghost" type="button" id="admOut">Sign out</button>
+    </div>
+
+    <div class="adm__scroll">
+      <table class="adm__table">
+        <caption class="sr-only">Every reply, newest first</caption>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Guest</th>
+            <th scope="col">Reply</th>
+            <th scope="col">Guests</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Received</th>
+          </tr>
+        </thead>
+        <tbody id="admRows"></tbody>
+      </table>
+    </div>
+    <p class="adm__empty" id="admEmpty" hidden>No replies yet.</p>
+    <p class="adm__stamp" id="admStamp"></p>
+  </section>
+
+  <p class="rsvp__status" id="admStatus" role="status" aria-live="polite"></p>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
