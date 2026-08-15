@@ -34,17 +34,18 @@ ashiq-sherin.jpeg              your original artwork, kept untouched
 
 ## The gate
 
-The opening screen is an ornate arched double door built in CSS and SVG — not a
-picture — so it stays sharp on every screen. Tapping anywhere plays the music and
-starts a slow ~8-second sequence:
+The opening screen is a wrought-iron garden gate under a classical stone arch,
+drawn in CSS and SVG — not a picture — so it stays sharp on every screen. You can
+see the garden through the ironwork before you tap. Tapping anywhere plays the
+music and starts a slow ~8-second sequence:
 
 | Time | What happens |
 |---|---|
 | 0.0s | music starts, the caption fades away |
-| 0.0s | the two leaves begin a 6.5s swing outward |
-| 0.6s | lamplight and a hanging lantern come up behind the doors |
+| 0.0s | the two leaves begin a 6.5s swing inward, back behind the columns |
+| 0.6s | the light and the lamps come up in the garden beyond |
 | 4.4s | a golden burst blooms through the opening |
-| 4.4s | the view begins drifting through the doorway |
+| 4.4s | the view begins drifting through the archway |
 | 6.5s | the gate dissolves into the invitation |
 
 The full timeline is written out in a comment on the `.gate` rule in
@@ -52,7 +53,17 @@ The full timeline is written out in a comment on the `.gate` rule in
 [`js/main.js`](js/main.js) are keyed to it. If you change one, change both.
 
 To make the swing slower or faster, edit the `6.5s` on the
-`.gate.is-open .door--left` / `--right` rules and shift the later steps to match.
+`.gate.is-open .leaf--left` / `--right` rules and shift the later steps to match.
+
+The arch, the leaves and the flora all share one 400 × 620 coordinate space, and
+`.doorway` is sized to exactly that ratio — so SVG viewBox units and the CSS
+percentages that place the leaves describe the same points. Keep that ratio if
+you resize anything.
+
+One trap when editing the ironwork: every gradient used on a *stroke* is
+`gradientUnits="userSpaceOnUse"`. A plain vertical or horizontal line has a
+zero-width bounding box, and an `objectBoundingBox` gradient is ignored there —
+the line silently vanishes, taking every picket and rail with it.
 
 ## Sound
 

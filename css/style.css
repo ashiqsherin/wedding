@@ -30,8 +30,10 @@
   --shadow-lg:0 30px 70px -25px rgba(62,10,24,.45);
   --shadow-md:0 16px 40px -20px rgba(62,10,24,.40);
 
-  /* heavy doors: a little initial resistance, then a long slow settle */
-  --ease-door:cubic-bezier(.28,.08,.20,1);
+  /* Heavy leaves: they resist at first, gather weight, then settle. Front-loaded
+     curves finish the visible part of the swing in the first two seconds and
+     leave the rest of the timeline with nothing happening. */
+  --ease-door:cubic-bezier(.62,.02,.34,1);
   --ease-soft:cubic-bezier(.22,.61,.36,1);
 
   --f-display:"Great Vibes",cursive;
@@ -80,11 +82,11 @@ img{display:block;max-width:100%;height:auto;}
   cursor:pointer;
   overflow:hidden;
   background:
-    radial-gradient(120% 90% at 50% 18%,#FBF6EC 0%,#F2E7D6 42%,#E4D2B7 78%,#D8C09E 100%);
+    radial-gradient(120% 92% at 50% 20%,#FEFCF7 0%,#F8F2E6 40%,#EFE3CC 76%,#E4D3B4 100%);
   /* ── Gate timeline (all times from the tap) ──────────────
      0.00s  music starts, caption fades out
-     0.00s  doors begin their 6.5s swing
-     0.60s  lamplight and lantern come up behind the doors
+     0.00s  the iron leaves begin their 6.5s swing
+     0.60s  the light and the lamps come up in the garden beyond
      4.40s  golden burst blooms through the opening
      4.40s  the view begins moving through the doorway
      4.80s  the page underneath goes live (js/main.js)
@@ -145,142 +147,111 @@ img{display:block;max-width:100%;height:auto;}
   animation:fadeDown 1.2s var(--ease-soft) both .2s;
 }
 
-/* ── Doorway ─────────────────────────────────────────── */
+/* ── Gateway ─────────────────────────────────────────────────────────
+   The arch SVG, the leaves and the flora all live in one 400 × 620 space.
+   Sizing the box to that exact ratio — rather than clamping width and height
+   separately — means SVG viewBox units and CSS percentages describe the same
+   points, so the leaves always sit precisely inside the arch opening. */
 .doorway{
+  --dw:min(82vw,340px,34vh);
+  --dw:min(82vw,340px,34svh);
   position:relative;
-  width:min(74vw,340px);
-  height:min(52vh,520px);
-  perspective:1400px;
-  perspective-origin:50% 45%;
+  width:var(--dw);
+  height:calc(var(--dw) * 1.55);   /* 620 / 400 */
   animation:riseUp 1.3s var(--ease-soft) both .35s;
 }
-.doorway__behind{
+
+/* ── The garden beyond, seen through the ironwork ────── */
+.beyond{
   position:absolute;inset:0;
-  clip-path:url(#clipArch);
-  background:linear-gradient(180deg,#2A0710 0%,#4A0F1E 55%,#2A0710 100%);
+  clip-path:url(#clipArchOpen);
   overflow:hidden;
+  z-index:1;
 }
-.doorway__light{
-  position:absolute;left:50%;top:52%;
-  width:135%;aspect-ratio:1;transform:translate(-50%,-50%);
-  background:radial-gradient(circle,rgba(255,238,196,.92) 0%,rgba(232,186,104,.45) 26%,rgba(140,60,50,0) 60%);
-  opacity:0;
-  transition:opacity 2.6s ease .6s;
+.beyond__sky{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,#FCF8F0 0%,#F7F0E1 46%,#EFE3CB 100%);
 }
-.doorway__lantern{
-  position:absolute;left:50%;top:26%;
-  width:34px;height:52px;margin-left:-17px;
-  border-radius:40% 40% 46% 46%/54% 54% 40% 40%;
-  background:linear-gradient(180deg,#FFF0C4,#E2B95E 60%,#A8763A);
-  box-shadow:0 0 26px 10px rgba(255,214,140,.55);
-  opacity:0;
+.beyond__far{position:absolute;inset:0;width:100%;height:100%;}
+.beyond__lamp{
+  position:absolute;top:56%;
+  width:7%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 42% 36%,#FFF7DF 0%,#F0CF8C 48%,rgba(214,168,88,0) 72%);
+  box-shadow:0 0 18px 6px rgba(255,220,148,.38);
+  opacity:.28;
   transition:opacity 2.6s ease .9s;
 }
-.doorway__frame{
-  position:absolute;inset:-2.2%;
-  width:104.4%;height:104.4%;
-  pointer-events:none;
-  filter:drop-shadow(0 3px 6px rgba(62,10,24,.35));
-  z-index:4;
+.beyond__lamp--l{left:26%;}
+.beyond__lamp--r{right:26%;}
+.beyond__light{
+  position:absolute;left:50%;top:58%;
+  width:160%;aspect-ratio:1;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(255,248,226,.95) 0%,rgba(240,214,150,.42) 30%,rgba(240,214,150,0) 64%);
+  opacity:.28;
+  transition:opacity 2.6s ease .6s;
 }
 
-/* ── Door leaves ─────────────────────────────────────── */
-/* The swing is a keyframe animation, not a transition. The idle breathe below
+/* ── The two wrought-iron leaves ──────────────────────────────────────
+   This box is the arch opening: x 92→308, y 180→604 of the 400 × 620 space.
+   The swing is a keyframe animation, not a transition. The idle breathe below
    also drives `transform`, and a CSS animation always beats a transition on the
    same property — cancelling the breathe in the same frame as a transform change
    means Chrome never starts the transition, so the leaves snap open instantly.
    Animation-replaces-animation has no such problem. */
-.door{
-  position:absolute;top:0;bottom:0;width:50.4%;
-  transform-style:preserve-3d;
+.leaves{
+  position:absolute;
+  left:23%;right:23%;top:29.03%;bottom:2.58%;
+  perspective:1500px;
+  perspective-origin:50% 28%;
   z-index:3;
+}
+.leaf{
+  position:absolute;top:0;bottom:0;width:50%;
+  transform-style:preserve-3d;
   will-change:transform;
 }
-.door--left {left:0; transform-origin:left  center;}
-.door--right{right:0;transform-origin:right center;}
+.leaf--left {left:0; transform-origin:left  center;}
+.leaf--right{right:0;transform-origin:right center;}
 
-.door__face{
-  position:absolute;inset:0;
-  background:
-    linear-gradient(100deg,rgba(255,255,255,.10) 0%,rgba(0,0,0,.18) 55%,rgba(0,0,0,.30) 100%),
-    repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 2px,transparent 2px 9px),
-    linear-gradient(165deg,#8B1E3F 0%,#6E1428 45%,#4E0D1D 100%);
+.leaf__art{
+  display:block;width:100%;height:100%;
+  overflow:visible;                       /* the crest rises above the leaf box */
+  filter:drop-shadow(0 3px 5px rgba(110,84,36,.34));
 }
-.door--left  .door__face{clip-path:url(#clipArchL);}
-.door--right .door__face{clip-path:url(#clipArchR);}
-.door--right .door__face{
-  background:
-    linear-gradient(260deg,rgba(255,255,255,.10) 0%,rgba(0,0,0,.18) 55%,rgba(0,0,0,.30) 100%),
-    repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 2px,transparent 2px 9px),
-    linear-gradient(195deg,#8B1E3F 0%,#6E1428 45%,#4E0D1D 100%);
-}
-
-/* recessed gold panel inside each leaf */
-.door__panel{
-  position:absolute;
-  top:12%;bottom:8%;
-  border:2px solid rgba(224,200,143,.72);
-  box-shadow:inset 0 0 0 1px rgba(255,240,200,.18),0 0 14px rgba(0,0,0,.35);
-  border-radius:46% 46% 4px 4px/22% 22% 4px 4px;
-  overflow:hidden;
-}
-.door--left  .door__panel{left:16%;right:9%;}
-.door--right .door__panel{right:16%;left:9%;}
-
-.door__lattice{
-  position:absolute;inset:0;
-  opacity:.62;
-  background-image:
-    repeating-linear-gradient( 45deg,rgba(224,200,143,.85) 0 1px,transparent 1px 15px),
-    repeating-linear-gradient(-45deg,rgba(224,200,143,.85) 0 1px,transparent 1px 15px);
-}
-.door__inlay{
-  position:absolute;left:50%;top:34%;
-  width:56%;aspect-ratio:1;transform:translate(-50%,-50%) rotate(45deg);
-  border:1.5px solid rgba(243,227,188,.9);
-  box-shadow:0 0 0 5px rgba(243,227,188,.20),inset 0 0 12px rgba(255,236,190,.35);
-}
-.door__inlay::after{
-  content:"";position:absolute;inset:22%;
-  border:1px solid rgba(243,227,188,.75);border-radius:50%;
-}
-
-.door__stud{
-  position:absolute;width:9px;height:9px;border-radius:50%;
-  background:radial-gradient(circle at 32% 30%,#F7E8BE,#B08B41 60%,#6E5322);
-  box-shadow:0 1px 2px rgba(0,0,0,.5);
-}
-.door--left  .door__stud--a{left:7%;top:32%;}
-.door--left  .door__stud--b{left:7%;bottom:12%;}
-.door--right .door__stud--a{right:7%;top:32%;}
-.door--right .door__stud--b{right:7%;bottom:12%;}
-
-/* the ring handles that meet in the middle */
-.door__handle{
-  position:absolute;top:52%;
-  width:clamp(24px,7vw,34px);aspect-ratio:1;
-  border:3.5px solid transparent;border-radius:50%;
-  background:var(--gold-grad) border-box;
-  -webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude;
-  box-shadow:0 3px 8px rgba(0,0,0,.5);
-}
-.door--left  .door__handle{right:8%;}
-.door--right .door__handle{left:8%;}
-
-/* dark inner edge revealed as the leaf swings */
-.door__edge{
-  position:absolute;top:6%;bottom:0;width:16px;
-  background:linear-gradient(90deg,#2C0812,#571224);
-  transform:rotateY(90deg);
-  backface-visibility:hidden;
-}
-.door--left  .door__edge{right:0;transform-origin:right center;}
-.door--right .door__edge{left:0; transform-origin:left  center;}
+.leaf--right .leaf__art{transform:scaleX(-1);}
 
 /* idle breathing so the gate feels alive before the tap */
-.gate:not(.is-open) .door--left {animation:doorBreathe  5.5s ease-in-out infinite;}
-.gate:not(.is-open) .door--right{animation:doorBreatheR 5.5s ease-in-out infinite -2.75s;}
+.gate:not(.is-open) .leaf--left {animation:leafBreathe  5.5s ease-in-out infinite;}
+.gate:not(.is-open) .leaf--right{animation:leafBreatheR 5.5s ease-in-out infinite -2.75s;}
+
+/* ── The stone arch, standing in front of the leaves ─── */
+.arch{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  pointer-events:none;
+  z-index:5;
+  filter:drop-shadow(0 8px 16px rgba(122,94,48,.20));
+}
+
+/* ── Flora spilling over the arch ─────────────────────── */
+.flora{position:absolute;inset:0;pointer-events:none;z-index:7;}
+.flora > svg{position:absolute;overflow:visible;}
+
+.flora__leaf{width:36%;}
+.flora__leaf--l{left:-23%;bottom:4%;}
+.flora__leaf--r{right:-23%;bottom:4%;transform:scaleX(-1);}
+
+.flora__rose{width:32%;}
+.flora__rose--l{left:-19%;top:0;}
+.flora__rose--r{right:-19%;top:0;transform:scaleX(-1);}
+
+/* The lilies sit inside the foot of the arch rather than hanging below it —
+   any lower and their leaves run into the caption on a phone. */
+.flora__lily{width:17%;}
+.flora__lily--a{left:-13%;bottom:6%;transform:rotate(-14deg);}
+.flora__lily--b{left:7%;  bottom:2%;transform:rotate(-5deg) scale(1.08);}
+.flora__lily--c{right:7%; bottom:2%;transform:rotate(5deg)  scale(1.08) scaleX(-1);}
+.flora__lily--d{right:-13%;bottom:6%;transform:rotate(14deg) scaleX(-1);}
 
 /* ── Caption below the doorway ───────────────────────── */
 .gate__caption{
@@ -332,10 +303,10 @@ img{display:block;max-width:100%;height:auto;}
 
 /* ── Opening sequence ────────────────────────────────── */
 .gate.is-open{opacity:0;visibility:hidden;}
-.gate.is-open .door--left {animation:doorOpenL 6.5s var(--ease-door) forwards;}
-.gate.is-open .door--right{animation:doorOpenR 6.5s var(--ease-door) forwards;}
-.gate.is-open .doorway__light,
-.gate.is-open .doorway__lantern{opacity:1;}
+.gate.is-open .leaf--left {animation:leafOpenL 6.5s var(--ease-door) forwards;}
+.gate.is-open .leaf--right{animation:leafOpenR 6.5s var(--ease-door) forwards;}
+.gate.is-open .beyond__light,
+.gate.is-open .beyond__lamp{opacity:1;}
 .gate.is-open .gate__glow{
   animation:burst 2.8s var(--ease-soft) forwards 4.4s;
 }
@@ -1024,23 +995,24 @@ section{position:relative;padding:clamp(3.5rem,10vh,7rem) var(--pad);}
 
 @keyframes softPulse{0%,100%{opacity:1;}50%{opacity:.48;}}
 
-@keyframes doorBreathe{
+@keyframes leafBreathe{
   0%,100%{transform:rotateY(0deg);}
-  50%    {transform:rotateY(1.6deg);}
+  50%    {transform:rotateY(-1.4deg);}
 }
-@keyframes doorBreatheR{
+@keyframes leafBreatheR{
   0%,100%{transform:rotateY(0deg);}
-  50%    {transform:rotateY(-1.6deg);}
+  50%    {transform:rotateY(1.4deg);}
 }
 
-/* the slow swing — heavy leaves easing open over 6.5s */
-@keyframes doorOpenL{
-  from{transform:rotateY(0deg)     translateZ(0);  filter:brightness(1);}
-  to  {transform:rotateY(-112deg)  translateZ(6px);filter:brightness(.68);}
+/* the slow swing — heavy leaves easing inward over 6.5s, back behind the
+   columns, so the garden opens up between them */
+@keyframes leafOpenL{
+  from{transform:rotateY(0deg)   translateZ(0);    filter:brightness(1);}
+  to  {transform:rotateY(104deg) translateZ(-8px); filter:brightness(.74);}
 }
-@keyframes doorOpenR{
-  from{transform:rotateY(0deg)     translateZ(0);  filter:brightness(1);}
-  to  {transform:rotateY(112deg)   translateZ(6px);filter:brightness(.68);}
+@keyframes leafOpenR{
+  from{transform:rotateY(0deg)    translateZ(0);   filter:brightness(1);}
+  to  {transform:rotateY(-104deg) translateZ(-8px);filter:brightness(.74);}
 }
 
 @keyframes burst{
@@ -1090,7 +1062,7 @@ section{position:relative;padding:clamp(3.5rem,10vh,7rem) var(--pad);}
   .br-sm{display:none;}
 }
 @media (min-width:900px){
-  .doorway{width:min(34vw,340px);height:min(58vh,540px);}
+  .doorway{--dw:min(34vw,360px,38svh);}
   .portrait{width:min(34vw,340px,31svh);}
 }
 
