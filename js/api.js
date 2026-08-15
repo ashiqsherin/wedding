@@ -22,12 +22,12 @@
   var API = {
     /* Deploy ▸ New deployment ▸ Web app · Execute as: Me · Access: Anyone,
        then paste the /exec URL here. See the R.S.V.P. section of README.md. */
-    url: 'https://script.google.com/macros/s/PASTE_DEPLOYMENT_ID_HERE/exec',
+    url: 'https://script.google.com/macros/s/AKfycbztQjDFss8OnsSsgsBYEkl9jPFBXOG8YatDj09Buh9WBI_B01Pj5atzn1tWP-rh8pbz/exec',
 
     /* Printed by setup() in apps-script/Code.gs. Not a secret — it is visible
        in this file. Its value is that you can rotate it (change the Script
        Property and this line) if the endpoint ever gets spammed. */
-    token: 'PASTE_SUBMIT_TOKEN_HERE',
+    token: 'as26-58527895-ffb',
 
     timeout: 12000
   };
