@@ -18,7 +18,7 @@
     clipEnd: 269,       // 4:29
     // 70% of the level this used to play at (0.38) — quiet enough to sit
     // under the page rather than over it. Every play/unmute fades to this.
-    volume: 0.10,
+    volume: 0.06,
     fadeMs: 800,        // short fade so the music is audible right after the tap
 
     // Countdown target — Nikkah, 18 Dec 2026, 12:30 IST (UTC+05:30)
