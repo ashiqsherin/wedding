@@ -151,7 +151,80 @@
   (function () {
     var gate = $('#gate');
     var page = $('#page');
+    var video = $('#gateVideo');
     var opened = false;
+
+    // Two gates live in the markup. `gate--video` on #gate picks the film;
+    // without it the hand-drawn SVG gate runs exactly as it always has.
+    // If the film can't load we drop back to the SVG gate on the spot.
+    var useVideo = gate.classList.contains('gate--video') && !!video;
+
+    if (useVideo) {
+      // The markup ships `preload="none"` so reverting to the SVG gate costs no
+      // bandwidth. Only the film gate asks for the clip — and it asks early, so
+      // it is buffered by the time the guest taps.
+      video.preload = 'auto';
+      video.load();
+
+      video.addEventListener('error', function () {
+        if (!opened) { gate.classList.remove('gate--video'); useVideo = false; }
+      });
+    }
+
+    // Hands the page over once the gate has finished its business.
+    function reveal(liveAt, removeAt) {
+      setTimeout(function () {
+        document.body.classList.remove('is-locked');
+        document.body.classList.add('is-open');
+        page.setAttribute('aria-hidden', 'false');
+        window.scrollTo(0, 0);
+        startPetals();
+      }, reduceMotion ? 60 : liveAt);
+
+      setTimeout(function () {
+        gate.remove();
+      }, reduceMotion ? 300 : removeAt);
+    }
+
+    /* ── A. the film gate ───────────────────────────────── */
+    function openVideo() {
+      var done = false;
+
+      // Runs when the clip ends — or when it clearly never will.
+      function finish() {
+        if (done) return;
+        done = true;
+        gate.classList.add('is-open');
+        // Matches the video-gate timeline in css/style.css.
+        reveal(420, 1250);
+      }
+
+      gate.classList.add('is-playing');
+
+      if (reduceMotion) { finish(); return; }
+
+      video.addEventListener('ended', finish);
+
+      var playing = video.play();
+      if (playing && playing.catch) {
+        // Autoplay blocked, codec unsupported, file missing — don't strand
+        // the guest on the gate; go straight through.
+        playing.catch(finish);
+      }
+
+      // Safety net: `ended` can be missed if the tab is backgrounded mid-clip.
+      var wait = (video.duration > 0 ? video.duration * 1000 : 8200) + 900;
+      setTimeout(finish, wait);
+    }
+
+    /* ── B. the SVG gate (original) ─────────────────────── */
+    function openSvg() {
+      gate.classList.add('is-open');
+
+      // Let the page underneath become live while the doors are still swinging.
+      // Matches the gate timeline in css/style.css (fade ends at 7.7s).
+      reveal(4800, 7900);
+    }
 
     function open() {
       if (opened) return;
@@ -159,21 +232,8 @@
 
       // Music first — this is the user gesture that permits playback.
       Music.play();
-      gate.classList.add('is-open');
 
-      // Let the page underneath become live while the doors are still swinging.
-      setTimeout(function () {
-        document.body.classList.remove('is-locked');
-        document.body.classList.add('is-open');
-        page.setAttribute('aria-hidden', 'false');
-        window.scrollTo(0, 0);
-        startPetals();
-      }, reduceMotion ? 60 : 4800);
-
-      // Matches the gate timeline in css/style.css (fade ends at 7.7s).
-      setTimeout(function () {
-        gate.remove();
-      }, reduceMotion ? 300 : 7900);
+      if (useVideo) openVideo(); else openSvg();
     }
 
     gate.addEventListener('click', open);

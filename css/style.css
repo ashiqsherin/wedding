@@ -496,6 +496,52 @@ section{position:relative;padding:clamp(3.5rem,10vh,7rem) var(--pad);}
   object-fit:cover;object-position:50% 18%;
   clip-path:url(#clipArch);
 }
+.portrait__arch video{
+  display:block;
+  width:100%;height:100%;
+  object-fit:cover;object-position:50% 50%;
+  clip-path:url(#clipArch);
+}
+
+/* ── Film variant ─────────────────────────────────────
+   The clip is 16:9, so the frame follows the footage instead of cropping it
+   into the onion arch: same gold edge, halo, sheen and float, rectangular.
+   Width is capped off svh so the wider block keeps the old vertical footprint
+   (1:1.2 at 31svh ≈ 37svh tall → 16:9 needs ~66svh of width for the same). */
+.portrait--film{
+  width:min(78vw,460px,56svh);
+  /* The names below are a narrow block of script type; a very wide film frame
+     reads as a separate object above them. Kept close in width so the two sit
+     as one stack, and pulled tighter vertically. */
+  margin-bottom:clamp(.7rem,2vh,1.4rem);
+}
+.portrait--film .portrait__halo{inset:-30% -12%;}
+.portrait--film .portrait__arch{
+  aspect-ratio:16/9;
+  clip-path:none;
+  border-radius:14px;
+  overflow:hidden;          /* the arch clip used to contain the sheen sweep */
+  /* No float here: nudging a playing <video> by fractions of a pixel every
+     frame makes the footage shimmer. The halo behind it still breathes. */
+  animation:none;
+  transform:translateZ(0);  /* own compositing layer → steady playback */
+}
+.portrait--film .portrait__arch video{
+  /* `cover` rather than `contain`: the clip is exactly 16:9 like the frame, so
+     nothing is cropped, and it can't leave a hairline seam that flickers when
+     the frame height lands on a fractional pixel. */
+  object-fit:cover;
+  clip-path:none;
+  border-radius:10px;
+}
+.portrait--film .portrait__sheen{
+  clip-path:none;
+  border-radius:10px;
+}
+/* The sprigs are sized as a share of the frame — shrink them now it is wide. */
+.portrait--film .portrait__sprig{width:20%;}
+.portrait--film .portrait__sprig--l{left:-10%;}
+.portrait--film .portrait__sprig--r{right:-10%;}
 .portrait__sheen{
   position:absolute;inset:0;
   clip-path:url(#clipArch);
@@ -1342,6 +1388,10 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
 @media (min-width:900px){
   .doorway{--dw:min(34vw,360px,38svh);}
   .portrait{width:min(34vw,340px,31svh);}
+  /* A 16:9 block is only 0.56 as tall as it is wide, so it can take more width
+     than the 1:1.2 portrait before the hero stops fitting the fold — but not so
+     much that it dwarfs the names underneath. */
+  .portrait--film{width:min(52vw,700px,56svh);}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -1359,4 +1409,115 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
   .gate,.music-btn,.scroll-progress,.petals,.hero__scroll{display:none !important;}
   .page{opacity:1 !important;visibility:visible !important;}
   body{background:#fff;}
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   1b. THE VIDEO GATE       (opt-in — `gate--video` on #gate)
+   ──────────────────────────────────────────────────────────────────
+   An alternative first gate: the clip in assets/gate-opening.mp4 in
+   place of the hand-drawn SVG gateway. The bismillah above and the
+   caption below are untouched — only the doorway swaps — and the film
+   is sized to the exact height the SVG gateway occupied, so nothing
+   on the screen shifts.
+
+   To revert: delete `gate--video` from the #gate element in
+   index.html. Nothing else needs touching; this whole block then
+   goes unused.
+
+   ── Video-gate timeline (all times from the tap) ──────────
+   0.00s  music starts, bismillah + caption fade away
+   0.00s  the film plays (5.1s), slowly swelling to 1.05
+   4.10s  golden burst blooms out of the doorway
+   5.13s  clip ends → the doorway is pulled through, gate fades
+   5.55s  the page underneath goes live (js/main.js)
+   6.35s  gate removed from the DOM (js/main.js)
+   ────────────────────────────────────────────────────────── */
+.doorway--video{display:none;}
+.gate--video .doorway--svg{display:none;}
+.gate--video .doorway--video{
+  display:block;
+  /* Match the SVG gateway's box height exactly (--dw × 1.55), then let
+     the film's own 578 × 1012 ratio decide the width. */
+  width:min(82vw, calc(var(--dw) * 1.55 * 578 / 1012));
+  height:auto;
+  aspect-ratio:578 / 1012;
+}
+
+.vgate{
+  position:absolute;inset:0;
+  border-radius:clamp(10px,2.6vw,18px);
+  overflow:hidden;
+  background:#3B0A16;                       /* matches the film's darkest red */
+  box-shadow:
+    0 22px 46px -20px rgba(92,18,36,.50),
+    0 6px 16px rgba(110,84,36,.20);
+  /* Flat on its own layer. The film already pushes through the curtains, so the
+     box does not move: scaling a <video> for five seconds resamples every frame
+     and reads as a shake on top of the footage. */
+  transform:translateZ(0);
+  transform-origin:50% 46%;
+}
+.vgate__film{
+  display:block;width:100%;height:100%;
+  object-fit:cover;
+  background:#3B0A16;
+}
+/* The still that greets the guest. Cropped from Gate1.jpeg to the clip's own
+   framing, so it sits exactly over frame 0 — it just holds far more detail than
+   the film does. It covers the video until the tap, then fades. */
+.vgate__still{
+  position:absolute;inset:0;
+  display:block;width:100%;height:100%;
+  object-fit:cover;
+  pointer-events:none;
+  opacity:1;
+}
+/* the gold rule the rest of the invitation is framed in */
+.vgate__frame{
+  position:absolute;inset:0;pointer-events:none;
+  border:1px solid rgba(168,135,63,.85);
+  border-radius:inherit;
+  box-shadow:
+    inset 0 0 0 4px rgba(255,246,219,.12),
+    inset 0 0 26px rgba(60,10,22,.34);
+}
+/* a soft cream glaze so the film sits in the page's light rather than
+   punching a hole in it */
+.vgate__sheen{
+  position:absolute;inset:0;pointer-events:none;
+  border-radius:inherit;
+  background:
+    linear-gradient(180deg,rgba(255,250,238,.16) 0%,rgba(255,250,238,0) 26%),
+    radial-gradient(110% 78% at 50% 42%,transparent 52%,rgba(60,10,22,.30) 100%);
+  transition:opacity 1.6s ease;
+}
+
+/* ── Playing ─────────────────────────────────────────── */
+.gate--video.is-playing .gate__bismillah,
+.gate--video.is-playing .gate__caption{
+  animation:fadeAway 1s ease forwards;
+}
+.gate--video.is-playing .vgate__sheen{opacity:.45;}
+/* Hand over to the film once it is moving — a hard swap would read as the
+   picture suddenly going soft. */
+.gate--video.is-playing .vgate__still{
+  opacity:0;
+  transition:opacity .55s ease .18s;
+}
+/* Lands on the last beat of the 8.1s clip. */
+.gate--video.is-playing .gate__glow{
+  animation:burst 2.4s var(--ease-soft) forwards 6.5s;
+}
+
+/* ── Opening ─────────────────────────────────────────── */
+.gate--video.is-open{
+  transition:opacity .9s ease .12s, visibility .9s ease .12s;
+}
+.gate--video.is-open .doorway--video{
+  animation:pullIn 1.3s var(--ease-door) forwards;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .gate--video.is-playing .gate__glow{animation:none;}
 }

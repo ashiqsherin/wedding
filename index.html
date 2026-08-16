@@ -218,7 +218,10 @@
 
 
 <!-- ══════════════════════════ 1. THE GATE ══════════════════════════ -->
-<div class="gate" id="gate" role="button" tabindex="0"
+<!-- The `gate--video` class picks the video gateway below instead of the
+     hand-drawn SVG one. Remove that one class to go back to the SVG gate —
+     both markup blocks stay in the file. -->
+<div class="gate gate--video" id="gate" role="button" tabindex="0"
      aria-label="Tap to open the wedding invitation">
 
   <div class="gate__vignette"></div>
@@ -236,8 +239,28 @@
 
     <p class="gate__bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
 
-    <!-- The gateway: garden beyond → iron leaves → stone arch → flora -->
-    <div class="doorway">
+    <!-- ── Gateway A: the video gate (shown while .gate--video is set) ──
+         What you land on is the sharp still (assets/Gate1.jpeg, cropped to the
+         clip's exact framing) — the film's own first frame is soft. The tap
+         starts playback and the still cross-fades away; the page is revealed
+         when the clip ends. -->
+    <div class="doorway doorway--video">
+      <div class="vgate">
+        <video class="vgate__film" id="gateVideo"
+               src="assets/gate-opening.mp4"
+               poster="assets/gate-poster.jpg"
+               muted playsinline preload="none"
+               disablepictureinpicture disableremoteplayback
+               aria-hidden="true"></video>
+        <img class="vgate__still" src="assets/gate-poster.jpg" alt=""
+             width="578" height="1012" draggable="false" aria-hidden="true">
+        <span class="vgate__frame" aria-hidden="true"></span>
+        <span class="vgate__sheen" aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <!-- ── Gateway B: the SVG gate — garden beyond → iron leaves → arch → flora -->
+    <div class="doorway doorway--svg">
 
       <!-- 1. the garden that lies beyond, seen through the ironwork -->
       <div class="beyond" aria-hidden="true">
@@ -459,11 +482,13 @@
       <p class="hero__bismillah reveal" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
       <p class="hero__eyebrow reveal" data-delay="1">Together with our families</p>
 
-      <figure class="portrait reveal" data-delay="2">
+      <figure class="portrait portrait--film reveal" data-delay="2">
         <div class="portrait__halo" aria-hidden="true"></div>
         <div class="portrait__arch">
-          <img src="assets/images/couple.jpeg" width="1068" height="1100"
-               alt="Muhammed Ashiq and Fathima Sherin" />
+          <video src="assets/couple.mp4" width="1280" height="720"
+                 poster="assets/images/couple.jpeg"
+                 autoplay muted loop playsinline preload="auto"
+                 aria-label="Muhammed Ashiq and Fathima Sherin"></video>
           <span class="portrait__sheen" aria-hidden="true"></span>
         </div>
         <span class="portrait__sprig portrait__sprig--l" aria-hidden="true"></span>
@@ -477,7 +502,7 @@
       </h2>
 
       <p class="hero__date reveal" data-delay="4">
-        <span>18</span><b>&middot;</b><span>19</span><b>&middot;</b><span>December</span><b>&middot;</b><span>2026</span>
+        <span>19</span><b>&middot;</b><span>December</span><b>&middot;</b><span>2026</span>
       </p>
       <p class="hero__place reveal" data-delay="5">KMK Auditorium &nbsp;&middot;&nbsp; Karakkuthangadi</p>
     </div>
@@ -535,7 +560,7 @@
         <h4 class="fam__name">Muhammed Ashiq</h4>
         <div class="fam__rule" aria-hidden="true"><i></i><span>&#10022;</span><i></i></div>
         <p class="fam__rel">Son of</p>
-        <p class="fam__parents">Mr. Ebrahim<br /><em>&amp;</em><br />Sameera</p>
+        <p class="fam__parents">Mr. Ebrahim<br /><em>&amp;</em><br />Mrs. Sameera Ebrahim</p>
       </article>
 
       <div class="families__amp reveal" data-delay="1" aria-hidden="true">
@@ -548,7 +573,7 @@
         <h4 class="fam__name">Fathima Sherin</h4>
         <div class="fam__rule" aria-hidden="true"><i></i><span>&#10022;</span><i></i></div>
         <p class="fam__rel">Daughter of</p>
-        <p class="fam__parents">Kunhu Muhammed (Late)<br /><em>&amp;</em><br />Kadeeja</p>
+        <p class="fam__parents">Mr. Kunhu Muhammed (Late)<br /><em>&amp;</em><br />Mrs. Kadeeja Kunhu Muhammed</p>
       </article>
 
     </div>
