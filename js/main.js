@@ -24,6 +24,50 @@
     rsvpKey: 'ashiq-sherin-rsvp'        // localStorage: "this browser replied"
   };
 
+  /* ── The gates on offer ───────────────────────────────────────
+     Still being chosen between. `?gate=<key>` on any link picks one;
+     with no parameter the guest gets DEFAULT_GATE below, so the plain
+     address never depends on this. gates.html lays them out side by
+     side to compare.
+
+       src     the clip
+       poster  the sharp still the guest lands on, held over frame 0
+       w / h   the clip's own frame, so the doorway keeps its ratio
+       secs    its length — the burst is timed to land just inside it
+       label   how it reads in the chooser
+     A gate with no `src` is the hand-drawn SVG one. */
+  var GATES = {
+    film1: {
+      label: 'Film I — maroon & gold arch',
+      src: 'assets/gate-opening.mp4',
+      poster: 'assets/gate-poster.jpg',
+      w: 578, h: 1012, secs: 8.13
+    },
+    film2: {
+      label: 'Film II — pillared gate, roses',
+      src: 'assets/GateOpen2.mp4',
+      poster: 'assets/gate2-poster.jpg',
+      w: 478, h: 850, secs: 10
+    },
+    svg: {
+      label: 'The hand-drawn gate',
+      src: null
+    }
+  };
+  var DEFAULT_GATE = 'film2';
+
+  /* The chosen gate, or the default when ?gate= is missing or unknown. */
+  function pickGate() {
+    var key;
+    try {
+      key = new URLSearchParams(window.location.search).get('gate');
+    } catch (e) {
+      key = (/[?&]gate=([^&]+)/.exec(window.location.search) || [])[1];
+    }
+    key = key && GATES[key] ? key : DEFAULT_GATE;
+    return { key: key, gate: GATES[key] };
+  }
+
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $  = function (s, c) { return (c || document).querySelector(s); };
   var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
@@ -152,14 +196,37 @@
     var gate = $('#gate');
     var page = $('#page');
     var video = $('#gateVideo');
+    var still = $('#gateStill');
     var opened = false;
 
     // Two gates live in the markup. `gate--video` on #gate picks the film;
     // without it the hand-drawn SVG gate runs exactly as it always has.
     // If the film can't load we drop back to the SVG gate on the spot.
-    var useVideo = gate.classList.contains('gate--video') && !!video;
+    var chosen = pickGate();
+    var film = chosen.gate.src ? chosen.gate : null;
+    var useVideo = !!film && !!video;
+
+    // `?gate=svg` sends the guest to the hand-drawn one instead.
+    if (!film) gate.classList.remove('gate--video');
+    else gate.classList.add('gate--video');
 
     if (useVideo) {
+      // Dress the doorway for this particular clip: its source, its still, its
+      // frame (so the box keeps the film's ratio) and the beat the burst lands
+      // on — a little before the end, whatever the length.
+      if (video.getAttribute('src') !== film.src) {
+        video.src = film.src;
+        video.poster = film.poster;
+        if (still) {
+          still.src = film.poster;
+          still.width = film.w;
+          still.height = film.h;
+        }
+      }
+      gate.style.setProperty('--vgate-w', String(film.w));
+      gate.style.setProperty('--vgate-h', String(film.h));
+      gate.style.setProperty('--vgate-burst', Math.max(0, film.secs - 1.6).toFixed(2) + 's');
+
       // The markup ships `preload="none"` so reverting to the SVG gate costs no
       // bandwidth. Only the film gate asks for the clip — and it asks early, so
       // it is buffered by the time the guest taps.
@@ -213,7 +280,7 @@
       }
 
       // Safety net: `ended` can be missed if the tab is backgrounded mid-clip.
-      var wait = (video.duration > 0 ? video.duration * 1000 : 8200) + 900;
+      var wait = (video.duration > 0 ? video.duration : film.secs) * 1000 + 900;
       setTimeout(finish, wait);
     }
 

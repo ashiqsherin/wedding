@@ -1379,23 +1379,44 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
    index.html. Nothing else needs touching; this whole block then
    goes unused.
 
+   Which film plays is picked by js/main.js from the ?gate= parameter
+   (see the GATES registry there, and gates.html to compare them). Each
+   film carries its own frame size and its own length, so the two things
+   that depend on the clip are read from custom properties the script
+   sets on #gate rather than being written in here:
+
+     --vgate-w / --vgate-h   the film's pixel frame, for the ratio
+     --vgate-burst           when the golden burst blooms, from the tap
+
+   The defaults below are the gate the plain address opens, so the
+   markup still stands on its own with the script absent.
+
    ── Video-gate timeline (all times from the tap) ──────────
    0.00s  music starts, bismillah + caption fade away
-   0.00s  the film plays (5.1s), slowly swelling to 1.05
-   4.10s  golden burst blooms out of the doorway
-   5.13s  clip ends → the doorway is pulled through, gate fades
-   5.55s  the page underneath goes live (js/main.js)
-   6.35s  gate removed from the DOM (js/main.js)
+   0.00s  the film plays, slowly swelling to 1.05
+   --vgate-burst  golden burst blooms out of the doorway
+   clip ends → the doorway is pulled through, gate fades
+   +0.42s the page underneath goes live (js/main.js)
+   +1.25s gate removed from the DOM (js/main.js)
    ────────────────────────────────────────────────────────── */
 .doorway--video{display:none;}
+/* Defaults for DEFAULT_GATE's clip (film2). The script overrides these three
+   on #gate itself, which is this same element — an inline style always wins —
+   but they are what the box is built from until it runs, so keep them in step
+   with the src/poster in index.html. */
+.gate--video{
+  --vgate-w:478;
+  --vgate-h:850;
+  --vgate-burst:8.40s;
+}
 .gate--video .doorway--svg{display:none;}
 .gate--video .doorway--video{
   display:block;
   /* Match the SVG gateway's box height exactly (--dw × 1.55), then let
-     the film's own 578 × 1012 ratio decide the width. */
-  width:min(82vw, calc(var(--dw) * 1.55 * 578 / 1012));
+     the film's own ratio decide the width. */
+  width:min(82vw, calc(var(--dw) * 1.55 * var(--vgate-w) / var(--vgate-h)));
   height:auto;
-  aspect-ratio:578 / 1012;
+  aspect-ratio:var(--vgate-w) / var(--vgate-h);
 }
 
 .vgate{
@@ -1459,9 +1480,9 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
   opacity:0;
   transition:opacity .55s ease .18s;
 }
-/* Lands on the last beat of the 8.1s clip. */
+/* Lands on the last beat of whichever clip is playing. */
 .gate--video.is-playing .gate__glow{
-  animation:burst 2.4s var(--ease-soft) forwards 6.5s;
+  animation:burst 2.4s var(--ease-soft) forwards var(--vgate-burst);
 }
 
 /* ── Opening ─────────────────────────────────────────── */

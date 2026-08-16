@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Choosing the gate — Ashiq weds Sherin</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#5C1224" />
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Great+Vibes&display=swap" rel="stylesheet" />
+
+<!-- The invitation's own tokens; only this page's layout is added below. -->
+<link rel="stylesheet" href="css/style.css" />
+
+<style>
+  /* ══════════════════════════════════════════════════════════════
+     The gate chooser — an internal page, not part of the invitation.
+     It reads the same GATES registry js/main.js uses, so a gate added
+     there shows up here with nothing to change on this page.
+     ══════════════════════════════════════════════════════════════ */
+  body.chooser{
+    background:var(--cream-100);
+    background-image:var(--pattern);
+    min-height:100vh;
+    padding:clamp(1.5rem,5vw,3.5rem) var(--pad) 4rem;
+  }
+
+  .chooser__head{max-width:60rem;margin:0 auto clamp(1.8rem,4vw,3rem);text-align:center;}
+  .chooser__eyebrow{
+    font-family:var(--f-caps);
+    font-size:clamp(.62rem,1.6vw,.72rem);
+    letter-spacing:.42em;text-transform:uppercase;
+    color:var(--gold-500);margin:0 0 .7rem;
+  }
+  .chooser__title{
+    font-family:var(--f-display);
+    font-size:clamp(2.1rem,7vw,3.2rem);
+    font-weight:400;line-height:1.1;margin:0 0 .6rem;
+    color:var(--wine-800);
+  }
+  .chooser__note{
+    font-size:clamp(.95rem,2.4vw,1.05rem);
+    color:var(--ink-soft);margin:0 auto;max-width:34rem;line-height:1.6;
+  }
+  .chooser__note code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.86em;background:var(--cream-200);
+    padding:.12em .42em;border-radius:4px;color:var(--wine-700);
+  }
+
+  .chooser__grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));
+    gap:clamp(1.2rem,3vw,2.2rem);
+    max-width:72rem;margin:0 auto;
+    align-items:start;justify-content:center;
+  }
+
+  .card{
+    /* A gate is a portrait card — left to fill a wide column it grows taller
+       than the screen and you can't see it against its neighbours. */
+    max-width:20rem;width:100%;justify-self:center;
+    background:var(--cream-50);
+    border:1px solid var(--cream-300);
+    border-radius:14px;
+    box-shadow:var(--shadow-md);
+    overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .card.is-current{border-color:var(--gold-300);box-shadow:var(--shadow-lg);}
+
+  /* The film sits in the same 2:3-ish letterbox whatever its own frame is,
+     so the cards line up; `contain` keeps every clip whole. */
+  .card__stage{
+    position:relative;
+    aspect-ratio:3 / 4;
+    background:var(--wine-900);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .card__stage video,
+  .card__stage img{
+    width:100%;height:100%;object-fit:contain;background:var(--wine-900);
+  }
+  .card__stage img{position:absolute;inset:0;transition:opacity .45s ease;}
+  .card__stage.is-playing img{opacity:0;}
+
+  /* the play affordance over the still */
+  .card__play{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:3.4rem;height:3.4rem;border-radius:50%;
+    background:rgba(253,250,245,.90);
+    border:1px solid var(--gold-300);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--wine-800);font-size:1.05rem;
+    box-shadow:0 6px 20px rgba(62,10,24,.35);
+    transition:opacity .3s ease,transform .3s ease;
+    pointer-events:none;
+  }
+  .card__stage.is-playing .card__play{opacity:0;transform:translate(-50%,-50%) scale(.8);}
+
+  /* the SVG gate has no film to preview */
+  .card__drawn{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.6rem;padding:1.5rem;text-align:center;
+    background:linear-gradient(180deg,var(--wine-800),var(--wine-900));
+    color:var(--gold-100);
+  }
+  .card__drawn span{font-size:2.4rem;line-height:1;}
+  .card__drawn p{margin:0;font-size:.92rem;color:var(--cream-200);line-height:1.5;}
+
+  .card__body{padding:1.1rem 1.2rem 1.3rem;display:flex;flex-direction:column;gap:.55rem;flex:1;}
+  .card__name{
+    font-family:var(--f-caps);
+    font-size:.95rem;letter-spacing:.04em;
+    margin:0;color:var(--wine-800);
+  }
+  .card__meta{
+    margin:0;font-size:.82rem;color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+  .card__meta b{font-weight:600;color:var(--gold-700);}
+
+  .card__actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:auto;padding-top:.6rem;}
+  .btn{
+    font-family:var(--f-caps);
+    font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    padding:.62rem 1rem;border-radius:999px;
+    text-decoration:none;text-align:center;
+    border:1px solid var(--gold-300);
+    color:var(--wine-800);background:transparent;
+    cursor:pointer;transition:background .25s ease,color .25s ease;
+  }
+  .btn:hover,.btn:focus-visible{background:var(--cream-200);}
+  .btn--go{
+    flex:1;
+    background:var(--wine-800);border-color:var(--wine-800);color:var(--gold-100);
+  }
+  .btn--go:hover,.btn--go:focus-visible{background:var(--wine-700);color:var(--gold-100);}
+
+  .badge{
+    display:inline-block;
+    font-family:var(--f-caps);font-size:.6rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--gold-700);
+    border:1px solid var(--gold-300);border-radius:999px;
+    padding:.2rem .55rem;
+  }
+
+  .chooser__foot{
+    max-width:60rem;margin:clamp(2rem,5vw,3rem) auto 0;
+    text-align:center;font-size:.88rem;color:var(--ink-soft);line-height:1.7;
+  }
+  .chooser__foot a{color:var(--wine-700);}
+</style>
+</head>
+
+<body class="chooser">
+
+<header class="chooser__head">
+  <p class="chooser__eyebrow">Internal &middot; not part of the invitation</p>
+  <h1 class="chooser__title">Choosing the gate</h1>
+  <p class="chooser__note">
+    Every gate we have is kept here. Tap a card to watch the clip; open one
+    full-size to see it as a guest would, with the music and the invitation
+    behind it. Nothing is decided yet — the plain address still opens
+    <b id="defaultName">the default</b>. To make a choice final, change
+    <code>DEFAULT_GATE</code> in <code>js/main.js</code>.
+  </p>
+</header>
+
+<main class="chooser__grid" id="grid"></main>
+
+<p class="chooser__foot">
+  Back to <a href="index.html">the invitation</a>.
+  Add a gate by dropping the clip in <code>assets/</code> and adding an entry
+  to <code>GATES</code> in <code>js/main.js</code> — it appears here on its own.
+</p>
+
+<script>
+/* The registry is the one in js/main.js, which lives inside an IIFE and so
+   isn't reachable from here. Rather than keep a second copy in sync, read
+   the script's text and lift the GATES object out of it. */
+(function () {
+  var grid = document.getElementById('grid');
+
+  fetch('js/main.js')
+    .then(function (r) { return r.text(); })
+    .then(function (src) {
+      var gates = parse(src, 'var GATES = ', '};');
+      var fallback = /var DEFAULT_GATE = '([^']+)'/.exec(src);
+      render(gates, fallback ? fallback[1] : null);
+    })
+    .catch(function () {
+      grid.innerHTML = '<p class="chooser__note">Could not read <code>js/main.js</code>. ' +
+        'This page needs to be served over http:// — try <code>python3 -m http.server</code> ' +
+        'in the project folder rather than opening the file directly.</p>';
+    });
+
+  // Pull one object literal out of the source and evaluate it. Same-origin,
+  // our own file, and this page never ships to a guest.
+  function parse(src, opener, closer) {
+    var from = src.indexOf(opener);
+    if (from < 0) return null;
+    from += opener.length;
+    var to = src.indexOf(closer, from);
+    if (to < 0) return null;
+    return Function('return ' + src.slice(from, to + 1))();
+  }
+
+  function render(gates, dflt) {
+    if (!gates) return;
+    if (dflt && gates[dflt]) {
+      document.getElementById('defaultName').textContent = gates[dflt].label;
+    }
+
+    Object.keys(gates).forEach(function (key) {
+      var g = gates[key];
+      var card = document.createElement('article');
+      card.className = 'card' + (key === dflt ? ' is-current' : '');
+
+      var stage = document.createElement('div');
+      stage.className = 'card__stage';
+
+      if (g.src) {
+        var video = document.createElement('video');
+        video.src = g.src;
+        video.poster = g.poster;
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = 'none';
+        video.setAttribute('playsinline', '');
+
+        var still = document.createElement('img');
+        still.src = g.poster;
+        still.alt = '';
+
+        var play = document.createElement('span');
+        play.className = 'card__play';
+        play.textContent = '▶';
+
+        stage.appendChild(video);
+        stage.appendChild(still);
+        stage.appendChild(play);
+
+        stage.addEventListener('click', function () {
+          if (video.paused) {
+            stage.classList.add('is-playing');
+            video.currentTime = 0;
+            video.play();
+          } else {
+            video.pause();
+            stage.classList.remove('is-playing');
+          }
+        });
+        video.addEventListener('ended', function () {
+          stage.classList.remove('is-playing');
+        });
+      } else {
+        var drawn = document.createElement('div');
+        drawn.className = 'card__drawn';
+        drawn.innerHTML = '<span>&#10022;</span>' +
+          '<p>Drawn in the page itself &mdash; the iron leaves swing open ' +
+          'over the garden. Open it full-size to see it move.</p>';
+        stage.appendChild(drawn);
+      }
+
+      var body = document.createElement('div');
+      body.className = 'card__body';
+
+      var name = document.createElement('h2');
+      name.className = 'card__name';
+      name.textContent = g.label;
+
+      var meta = document.createElement('p');
+      meta.className = 'card__meta';
+      meta.innerHTML = g.src
+        ? g.secs.toFixed(1) + 's &nbsp;&middot;&nbsp; ' + g.w + ' &times; ' + g.h +
+          ' &nbsp;&middot;&nbsp; <b>?gate=' + key + '</b>'
+        : 'No file &nbsp;&middot;&nbsp; <b>?gate=' + key + '</b>';
+
+      var actions = document.createElement('div');
+      actions.className = 'card__actions';
+
+      var go = document.createElement('a');
+      go.className = 'btn btn--go';
+      go.href = 'index.html?gate=' + key;
+      go.textContent = 'Open full-size';
+
+      actions.appendChild(go);
+
+      if (g.src) {
+        var file = document.createElement('a');
+        file.className = 'btn';
+        file.href = g.src;
+        file.target = '_blank';
+        file.rel = 'noopener';
+        file.textContent = 'Clip';
+        actions.appendChild(file);
+      }
+
+      body.appendChild(name);
+      body.appendChild(meta);
+      if (key === dflt) {
+        var badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = 'Currently live';
+        body.appendChild(badge);
+      }
+      body.appendChild(actions);
+
+      card.appendChild(stage);
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

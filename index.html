@@ -220,7 +220,13 @@
 <!-- ══════════════════════════ 1. THE GATE ══════════════════════════ -->
 <!-- The `gate--video` class picks the video gateway below instead of the
      hand-drawn SVG one. Remove that one class to go back to the SVG gate —
-     both markup blocks stay in the file. -->
+     both markup blocks stay in the file.
+
+     Which film plays is still being chosen: `?gate=film1|film2|svg`
+     swaps it (the GATES registry in js/main.js), and gates.html shows them
+     side by side. The src/poster written here are the default, film2, so
+     the guest never sees another gate's still flash by while the script
+     starts. Change these together with DEFAULT_GATE. -->
 <div class="gate gate--video" id="gate" role="button" tabindex="0"
      aria-label="Tap to open the wedding invitation">
 
@@ -247,13 +253,13 @@
     <div class="doorway doorway--video">
       <div class="vgate">
         <video class="vgate__film" id="gateVideo"
-               src="assets/gate-opening.mp4"
-               poster="assets/gate-poster.jpg"
+               src="assets/GateOpen2.mp4"
+               poster="assets/gate2-poster.jpg"
                muted playsinline preload="none"
                disablepictureinpicture disableremoteplayback
                aria-hidden="true"></video>
-        <img class="vgate__still" src="assets/gate-poster.jpg" alt=""
-             width="578" height="1012" draggable="false" aria-hidden="true">
+        <img class="vgate__still" id="gateStill" src="assets/gate2-poster.jpg" alt=""
+             width="478" height="850" draggable="false" aria-hidden="true">
         <span class="vgate__frame" aria-hidden="true"></span>
         <span class="vgate__sheen" aria-hidden="true"></span>
       </div>

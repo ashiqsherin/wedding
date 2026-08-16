@@ -69,6 +69,40 @@ One trap when editing the ironwork: every gradient used on a *stroke* is
 zero-width bounding box, and an `objectBoundingBox` gradient is ignored there —
 the line silently vanishes, taking every picket and rail with it.
 
+### Choosing between gates
+
+Which gate greets the guest is still open, so all of them are kept side by side
+at **[`gates.html`](gates.html)** — an internal page, `noindex`, not linked from
+the invitation. Tap a card to watch the clip; *Open full-size* runs it as a guest
+would see it.
+
+They live in one place, the `GATES` registry at the top of
+[`js/main.js`](js/main.js):
+
+| Key | What it is |
+|---|---|
+| `film2` | `assets/GateOpen2.mp4` — pillared gate with roses, 10s. **The default.** |
+| `film1` | `assets/gate-opening.mp4` — maroon & gold arch, 8.1s |
+| `svg` | the hand-drawn gate described above |
+
+`?gate=<key>` on any address picks one for that visit — `index.html?gate=film2`.
+An unknown key or no parameter at all falls back to `DEFAULT_GATE`, so the plain
+address a guest is given never depends on this.
+
+To add a gate, drop the clip in `assets/`, pull a poster from its first frame
+(`ffmpeg -i assets/yours.mp4 -frames:v 1 -q:v 2 assets/yours-poster.jpg`) and add
+an entry with its `w`/`h` and length in seconds. The doorway takes its ratio from
+`w`/`h` and the golden burst is timed from `secs`, so nothing in the CSS needs
+touching and the film keeps the exact height the drawn gate occupied. The new
+gate appears on `gates.html` on its own.
+
+**To finalise a choice**, set `DEFAULT_GATE` to that key, and change the `src`,
+`poster` and the still's `width`/`height` on the `.doorway--video` block in
+[`index.html`](index.html) plus the three `--vgate-*` defaults on the
+`.gate--video` rule to match — otherwise the guest sees the old gate's still for
+the moment before the script runs. The losing gates stay in the registry in case
+you change your mind.
+
 ## Sound
 
 Only your music file plays — there are no sound effects.
