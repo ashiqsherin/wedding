@@ -491,57 +491,15 @@ section{position:relative;padding:clamp(3.5rem,10vh,7rem) var(--pad);}
   box-shadow:var(--shadow-lg);
   animation:floaty 8s ease-in-out infinite;
 }
-.portrait__arch img{
+/* The clip is landscape and the arch is tall, so `cover` fits its height exactly
+   and trims the sides — which makes the y in object-position a no-op for it. */
+.portrait__arch img,
+.portrait__arch video{
+  display:block;
   width:100%;height:100%;
   object-fit:cover;object-position:50% 18%;
   clip-path:url(#clipArch);
 }
-.portrait__arch video{
-  display:block;
-  width:100%;height:100%;
-  object-fit:cover;object-position:50% 50%;
-  clip-path:url(#clipArch);
-}
-
-/* ── Film variant ─────────────────────────────────────
-   The clip is 16:9, so the frame follows the footage instead of cropping it
-   into the onion arch: same gold edge, halo, sheen and float, rectangular.
-   Width is capped off svh so the wider block keeps the old vertical footprint
-   (1:1.2 at 31svh ≈ 37svh tall → 16:9 needs ~66svh of width for the same). */
-.portrait--film{
-  width:min(78vw,460px,56svh);
-  /* The names below are a narrow block of script type; a very wide film frame
-     reads as a separate object above them. Kept close in width so the two sit
-     as one stack, and pulled tighter vertically. */
-  margin-bottom:clamp(.7rem,2vh,1.4rem);
-}
-.portrait--film .portrait__halo{inset:-30% -12%;}
-.portrait--film .portrait__arch{
-  aspect-ratio:16/9;
-  clip-path:none;
-  border-radius:14px;
-  overflow:hidden;          /* the arch clip used to contain the sheen sweep */
-  /* No float here: nudging a playing <video> by fractions of a pixel every
-     frame makes the footage shimmer. The halo behind it still breathes. */
-  animation:none;
-  transform:translateZ(0);  /* own compositing layer → steady playback */
-}
-.portrait--film .portrait__arch video{
-  /* `cover` rather than `contain`: the clip is exactly 16:9 like the frame, so
-     nothing is cropped, and it can't leave a hairline seam that flickers when
-     the frame height lands on a fractional pixel. */
-  object-fit:cover;
-  clip-path:none;
-  border-radius:10px;
-}
-.portrait--film .portrait__sheen{
-  clip-path:none;
-  border-radius:10px;
-}
-/* The sprigs are sized as a share of the frame — shrink them now it is wide. */
-.portrait--film .portrait__sprig{width:20%;}
-.portrait--film .portrait__sprig--l{left:-10%;}
-.portrait--film .portrait__sprig--r{right:-10%;}
 .portrait__sheen{
   position:absolute;inset:0;
   clip-path:url(#clipArch);
@@ -1388,10 +1346,6 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
 @media (min-width:900px){
   .doorway{--dw:min(34vw,360px,38svh);}
   .portrait{width:min(34vw,340px,31svh);}
-  /* A 16:9 block is only 0.56 as tall as it is wide, so it can take more width
-     than the 1:1.2 portrait before the hero stops fitting the fold — but not so
-     much that it dwarfs the names underneath. */
-  .portrait--film{width:min(52vw,700px,56svh);}
 }
 
 @media (prefers-reduced-motion:reduce){
