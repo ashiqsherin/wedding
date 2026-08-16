@@ -16,7 +16,9 @@
     // Play only this slice of the track, on loop.
     clipStart: 13,      // 0:13
     clipEnd: 269,       // 4:29
-    volume: 0.38,
+    // 70% of the level this used to play at (0.38) — quiet enough to sit
+    // under the page rather than over it. Every play/unmute fades to this.
+    volume: 0.10,
     fadeMs: 800,        // short fade so the music is audible right after the tap
 
     // Countdown target — Nikkah, 18 Dec 2026, 12:30 IST (UTC+05:30)
@@ -722,6 +724,12 @@
       var h = document.documentElement.scrollHeight - window.innerHeight;
       var p = h > 0 ? (window.scrollY / h) * 100 : 0;
       bar.style.width = p.toFixed(2) + '%';
+
+      // The hero's scroll hint has done its job the moment the page moves,
+      // and it does not come back — a guest who has scrolled once knows.
+      if (window.scrollY > 40) {
+        document.body.classList.add('has-scrolled');
+      }
       ticking = false;
     }
 

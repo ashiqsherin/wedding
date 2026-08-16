@@ -595,8 +595,16 @@
       <p class="hero__place reveal" data-delay="5">KMK Auditorium &nbsp;&middot;&nbsp; Karakkuthangadi</p>
     </div>
 
-    <a class="hero__scroll reveal" data-delay="6" href="#verse" aria-label="Scroll down">
-      <span class="hero__mouse"><i></i></span>
+    <!-- Scroll hint. Pinned to the foot of the viewport rather than parked at
+         the end of the hero: on a short phone the hero's own content fills the
+         screen and anything below it is clipped away — which is exactly when a
+         guest most needs telling there is more. js/main.js puts `has-scrolled`
+         on <body> the moment they move, and it fades out. -->
+    <a class="hero__scroll" href="#verse" aria-label="Scroll down to the rest of the invitation">
+      <span class="hero__scroll-pill">
+        <span class="hero__scroll-label">Scroll for more</span>
+        <span class="hero__chevrons" aria-hidden="true"><i></i><i></i><i></i></span>
+      </span>
     </a>
   </section>
 

@@ -38,7 +38,7 @@ The numbers live at the top of [`js/main.js`](../../js/main.js):
 ```js
 clipStart: 13,   // 0:13
 clipEnd:   269,  // 4:29
-volume:    0.55,
+volume:    0.27,
 fadeMs:    800,
 ```
 

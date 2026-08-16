@@ -583,17 +583,57 @@ section{position:relative;padding:clamp(3.5rem,10vh,7rem) var(--pad);}
   color:var(--ink-soft);
 }
 
-.hero__scroll{position:relative;z-index:2;margin-top:clamp(1.1rem,3.2vh,2.2rem);text-decoration:none;}
-.hero__mouse{
-  display:block;width:22px;height:36px;border-radius:12px;
-  border:1.5px solid var(--gold-500);opacity:.8;
-  position:relative;
+/* ── Scroll hint ─────────────────────────────────────
+   Fixed to the foot of the viewport, so a hero that already fills a short
+   phone cannot clip the one thing telling the guest to keep going. It arrives
+   with the page and leaves at the first scroll (body.has-scrolled). The
+   anchor is only a centring rail — the pill takes the taps. */
+.hero__scroll{
+  position:fixed;left:0;right:0;bottom:clamp(.9rem,3.2vh,1.7rem);
+  z-index:60;
+  display:none;justify-content:center;
+  pointer-events:none;
+  text-decoration:none;
 }
-.hero__mouse i{
-  position:absolute;left:50%;top:7px;margin-left:-2px;
-  width:4px;height:7px;border-radius:2px;background:var(--gold-500);
-  animation:wheel 1.8s ease-in-out infinite;
+body.is-open .hero__scroll{display:flex;animation:fadeUp 1s var(--ease-soft) both 1.15s;}
+body.is-open.has-scrolled .hero__scroll{
+  animation:none;opacity:0;visibility:hidden;
+  transition:opacity .5s var(--ease-soft),visibility 0s linear .5s;
 }
+.hero__scroll-pill{
+  pointer-events:auto;
+  display:flex;flex-direction:column;align-items:center;gap:.34rem;
+  padding:.5rem 1.15rem .55rem;
+  border-radius:999px;
+  border:1px solid rgba(201,169,106,.55);
+  background:rgba(255,253,248,.82);
+  -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  box-shadow:0 10px 26px -14px rgba(62,10,24,.55);
+  animation:bob 2.5s ease-in-out infinite;
+  transition:transform .3s var(--ease-soft),box-shadow .3s ease;
+}
+.hero__scroll:hover .hero__scroll-pill{box-shadow:0 14px 30px -12px rgba(62,10,24,.6);}
+.hero__scroll-label{
+  font-family:var(--f-caps);
+  font-size:clamp(.55rem,2.1vw,.68rem);
+  letter-spacing:.32em;text-transform:uppercase;text-indent:.32em;
+  color:var(--gold-500);
+  white-space:nowrap;
+}
+/* Three chevrons, each a corner of a square turned 45°, falling in turn. */
+.hero__chevrons{display:block;position:relative;width:16px;height:15px;}
+.hero__chevrons i{
+  position:absolute;left:50%;top:50%;
+  width:10px;height:10px;margin:-7px 0 0 -5px;
+  border-right:2px solid var(--gold-500);
+  border-bottom:2px solid var(--gold-500);
+  border-radius:0 0 2px 0;
+  transform:rotate(45deg);
+  opacity:0;
+  animation:chevron 1.9s var(--ease-soft) infinite;
+}
+.hero__chevrons i:nth-child(2){animation-delay:.19s;}
+.hero__chevrons i:nth-child(3){animation-delay:.38s;}
 
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1335,7 +1375,13 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
 @keyframes halo{0%,100%{opacity:.7;transform:scale(1);}50%{opacity:1;transform:scale(1.06);}}
 @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
 @keyframes sheen{0%{transform:translateX(-120%);}30%,100%{transform:translateX(120%);}}
-@keyframes wheel{0%{opacity:0;transform:translateY(0);}30%{opacity:1;}100%{opacity:0;transform:translateY(13px);}}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+@keyframes chevron{
+  0%  {opacity:0;transform:rotate(45deg) translate(-3px,-3px);}
+  35% {opacity:1;}
+  70% {opacity:.55;}
+  100%{opacity:0;transform:rotate(45deg) translate(3px,3px);}
+}
 
 @keyframes eq{
   0%,100%{height:5px;}
@@ -1384,6 +1430,11 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
   }
   .reveal{opacity:1;transform:none;filter:none;}
   .petals{display:none;}
+  /* The chevrons live inside their animation — with it stopped they would
+     hold its last frame, which is invisible, and all three would sit on the
+     same spot. Show the middle one, still. */
+  .hero__chevrons i{opacity:0 !important;}
+  .hero__chevrons i:nth-child(2){opacity:1 !important;}
 }
 
 @media print{
