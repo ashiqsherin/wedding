@@ -30,7 +30,7 @@ site.webmanifest               name + icons for "Add to Home Screen"
 assets/GateOpen1.png           the gate painting, as supplied
 assets/gate3-*.{jpg,png}       the pieces it is cut into — see The gate, below
 tools/build-gate3.py           cuts them; re-run it if the painting changes
-assets/images/couple.png      the portrait (cropped from ashiq-sherin.jpeg)
+assets/images/couple.jpeg      the portrait (cropped from ashiq-sherin.jpeg)
 assets/images/og-banner.jpg    the 1200×630 WhatsApp share picture
 assets/favicon.svg             tab icon (+ the png sizes beside it)
 assets/audio/README.md         how to add the background music
