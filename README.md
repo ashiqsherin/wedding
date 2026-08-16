@@ -93,9 +93,14 @@ the page's cream rather than stopping at a rectangle.
 
 Behind it, and still in the page, is the original: a wrought-iron garden gate
 under a classical stone arch, drawn in CSS and SVG — not a picture — so it stays
-sharp on every screen, and downloads nothing at all. It is what a guest on a
-metered or 2G line is given, and `?gate=svg` calls it up. You can see the garden
-through the ironwork before you tap. Its sequence is slower, ~8 seconds:
+sharp on every screen, and downloads nothing at all.
+
+It is **not a second gate on offer**. It is the safety net, and no guest can ask
+for it: it appears only when the painting cannot be had — a metered or 2G line,
+a picture that errors, or ten seconds gone with one of the three still missing.
+Because it is drawn rather than fetched, keeping it costs the guests who never
+see it nothing at all. You can see the garden through the ironwork before you
+tap. Its sequence is slower, ~8 seconds:
 
 | Time | What happens |
 |---|---|
@@ -123,47 +128,21 @@ One trap when editing the ironwork: every gradient used on a *stroke* is
 zero-width bounding box, and an `objectBoundingBox` gradient is ignored there —
 the line silently vanishes, taking every picket and rail with it.
 
-### Choosing between gates
+### The gates that are gone
 
-Which gate greets the guest is still open, so all of them are kept side by side
-at **[`gates.html`](gates.html)** — an internal page, `noindex`, not linked from
-the invitation. Tap a card to watch the clip; *Open full-size* runs it as a guest
-would see it.
+Two filmed gateways were tried alongside the painting — `assets/GateOpen2.mp4`
+and `assets/gate-opening.mp4` — and both have been taken out. With them went the
+`GATES` registry, the `?gate=` switch that chose between them, and `gates.html`,
+the internal page that showed them side by side. They cost a phone 600–700 KB of
+video before the guest had seen anything, on a connection that is often mobile
+data in a village.
 
-They live in one place, the `GATES` registry at the top of
-[`js/main.js`](js/main.js):
+The clips and their posters are still in `assets/`, and the whole apparatus is in
+git history if either is ever wanted back.
 
-| Key | What it is |
-|---|---|
-| `art` | the painted gate above, opened by the page itself. **The default.** |
-| `film2` | `assets/GateOpen2.mp4` — pillared gate with roses, 10s |
-| `film1` | `assets/gate-opening.mp4` — maroon & gold arch, 8.1s |
-| `svg` | the hand-drawn gate |
-
-Each entry says which `kind` it is — `art`, `film` or `svg` — and that is what
-picks the gateway: three of them live in the markup of
-[`index.html`](index.html), and one class on `#gate` (`gate--art`,
-`gate--video`, or neither) chooses between them.
-
-`?gate=<key>` on any address picks one for that visit — `index.html?gate=film2`.
-An unknown key or no parameter at all falls back to `DEFAULT_GATE`, so the plain
-address a guest is given never depends on this.
-
-To add a film, drop the clip in `assets/`, pull a poster from its first frame
-(`ffmpeg -i assets/yours.mp4 -frames:v 1 -q:v 2 assets/yours-poster.jpg`) and add
-an entry with `kind: 'film'`, its `w`/`h` and its length in seconds. The doorway
-takes its ratio from `w`/`h` and the golden burst is timed from `secs`, so
-nothing in the CSS needs touching and the film keeps the exact height the drawn
-gate occupied. The new gate appears on `gates.html` on its own.
-
-**To finalise a choice**, set `DEFAULT_GATE` to that key, then match it in
-[`index.html`](index.html): the class on `#gate`, and the paths the head's
-preload script fetches (the three pictures for the painted gate, the poster for
-a film). For a film also set the `src` on `#gateVideo`, the still's
-`width`/`height`, and the three `--vgate-*` defaults on the `.gate--video` rule
-in the CSS. Miss the preload and nothing breaks — the pictures simply arrive
-later than they need to. The losing gates stay in the registry in case you
-change your mind.
+Note that `?gate=` no longer does anything — and never did as much as it looked
+like it did. An unknown key always fell through to the default, so
+`?gate=anything` and the plain address showed the same painted gate.
 
 ## Sound
 
@@ -197,47 +176,52 @@ pictures, 470 KB. Everything else waits its turn.
 | the painted scene | 310 KB | preloaded in the head, at high priority |
 | its two leaves | 160 KB | preloaded right behind it; the guest waits on these |
 | the nasheed | 1.9 MB | connection opened once the gate is down, played on the tap |
-| couple's clip | 664 KB | only once the gate is open and the arch is in view |
+| couple's clip | 1.5 MB | only once the gate is open and the arch is in view |
 
 So a guest can tap the gate after ~470 KB rather than the ~12.8 MB the page
-used to pull before it would do anything. (A film gate instead of the painted
-one is 74 KB of still plus 644 KB of clip, and the guest waits on the clip.)
+used to pull before it would do anything.
 
 **While the gate comes down the wire**, the "tap anywhere to open" line is
 replaced by a gold progress bar and *Preparing your invitation…*, and the
 doorway is held back until all three pictures have landed — a gate that painted
 its scene before its leaves would stand open before it was touched. Tapping
 during the wait is not ignored: it starts the music, says *Almost there…*, and
-opens the moment the gate is ready. The bar shows real progress where the
-browser reports it — buffered bytes for a film, pictures landed for the painted
-gate — and a slow creep where it does not, so it never sits still.
+opens the moment the gate is ready. The bar shows how many of the three have
+arrived, and a slow creep where nothing is known yet, so it never sits still.
 
-**If the gate cannot be had** — 10 seconds gone with a film under 60% buffered
-or a picture still missing, or a straight error on any of them — the guest is
-quietly handed the hand-drawn SVG gate instead, which is pure CSS and downloads
-nothing. They never learn there was another one.
+**If the gate cannot be had** — a straight error on any of the three, or ten
+seconds gone with one still missing — the guest is quietly handed the hand-drawn
+SVG gate instead, which is pure CSS and downloads nothing. They never learn there
+was another one.
 
 **On Data Saver or a 2G-class line** (`navigator.connection`, Chromium only)
-that swap happens up front, and the couple's clip is never fetched at all — its
-poster stands in and reads as a portrait in its own right. Such a guest
-downloads no video and none of the gate's pictures: about 180 KB in total, and
-the music only if they ask for it. `?gate=` still overrides this, so every gate
-can be reviewed on any connection from `gates.html`.
+that swap happens up front, before a byte of painting is asked for, and the
+couple's clip is never fetched at all — its poster stands in and reads as a
+portrait in its own right. Such a guest downloads about 180 KB in total, and the
+music only if they ask for it.
 
-The same restraint is why `#gateVideo` carries no `poster` and why `#gateStill`,
-`#gateScene` and the two leaves carry no `src` in the markup: the preload
-scanner fetches all of them while parsing, long before any script could decide
-they were not wanted. Anything that must be skipped on a thin line has to be
-hung on its element by JavaScript.
+The same restraint is why `#gateScene` and the two leaves carry no `src` in the
+markup, and why the clip carries `data-src` rather than `src`: the preload
+scanner fetches whatever it finds while parsing, long before any script could
+decide it was not wanted. Anything that must be skippable on a thin line has to
+be hung on its element by JavaScript.
 
-**Re-encoding.** The clips are H.264, silent (the gate films had unused audio
-tracks), and written with `-movflags +faststart` so playback can begin before
-the file is down:
+**Re-encoding.** The couple's clip is H.264, silent (`-an` — it is played muted
+under the nasheed, so its audio track was 160 KB of nothing), cropped to the
+600×720 the arch actually shows, and written with `-movflags +faststart` so
+playback can begin before the file is down. To rebuild it from a 1280×720
+original:
 
 ```bash
-ffmpeg -i in.mp4 -an -c:v libx264 -preset veryslow -crf 26 \
-       -profile:v main -pix_fmt yuv420p -movflags +faststart out.mp4
+ffmpeg -i in.mp4 -an -vf "crop=600:720:340:0" \
+       -c:v libx264 -preset veryslow -crf 21 \
+       -profile:v high -pix_fmt yuv420p -movflags +faststart assets/couple.mp4
 ```
+
+The crop is `.portrait__arch`'s own geometry: a 1:1.2 box under `object-fit:
+cover` shows the central 46.9% of a 16:9 frame and discards the rest. Change
+that ratio in the CSS and this needs recutting — otherwise the clip will not
+reach the sides.
 
 ## The WhatsApp link preview
 

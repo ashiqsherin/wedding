@@ -1445,138 +1445,6 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
 
 
 /* ══════════════════════════════════════════════════════════════════
-   1b. THE VIDEO GATE       (opt-in — `gate--video` on #gate)
-   ──────────────────────────────────────────────────────────────────
-   An alternative first gate: the clip in assets/gate-opening.mp4 in
-   place of the hand-drawn SVG gateway. The bismillah above and the
-   caption below are untouched — only the doorway swaps — and the film
-   is sized to the exact height the SVG gateway occupied, so nothing
-   on the screen shifts.
-
-   To revert: delete `gate--video` from the #gate element in
-   index.html. Nothing else needs touching; this whole block then
-   goes unused.
-
-   Which film plays is picked by js/main.js from the ?gate= parameter
-   (see the GATES registry there, and gates.html to compare them). Each
-   film carries its own frame size and its own length, so the two things
-   that depend on the clip are read from custom properties the script
-   sets on #gate rather than being written in here:
-
-     --vgate-w / --vgate-h   the film's pixel frame, for the ratio
-     --vgate-burst           when the golden burst blooms, from the tap
-
-   The defaults below are the gate the plain address opens, so the
-   markup still stands on its own with the script absent.
-
-   ── Video-gate timeline (all times from the tap) ──────────
-   0.00s  music starts, bismillah + caption fade away
-   0.00s  the film plays, slowly swelling to 1.05
-   --vgate-burst  golden burst blooms out of the doorway
-   clip ends → the doorway is pulled through, gate fades
-   +0.42s the page underneath goes live (js/main.js)
-   +1.25s gate removed from the DOM (js/main.js)
-   ────────────────────────────────────────────────────────── */
-.doorway--video{display:none;}
-/* Defaults for DEFAULT_GATE's clip (film2). The script overrides these three
-   on #gate itself, which is this same element — an inline style always wins —
-   but they are what the box is built from until it runs, so keep them in step
-   with the src/poster in index.html. */
-.gate--video{
-  --vgate-w:478;
-  --vgate-h:850;
-  --vgate-burst:8.40s;
-}
-.gate--video .doorway--svg{display:none;}
-.gate--video .doorway--video{
-  display:block;
-  /* Match the SVG gateway's box height exactly (--dw × 1.55), then let
-     the film's own ratio decide the width. */
-  width:min(82vw, calc(var(--dw) * 1.55 * var(--vgate-w) / var(--vgate-h)));
-  height:auto;
-  aspect-ratio:var(--vgate-w) / var(--vgate-h);
-}
-
-.vgate{
-  position:absolute;inset:0;
-  border-radius:clamp(10px,2.6vw,18px);
-  overflow:hidden;
-  background:#3B0A16;                       /* matches the film's darkest red */
-  box-shadow:
-    0 22px 46px -20px rgba(92,18,36,.50),
-    0 6px 16px rgba(110,84,36,.20);
-  /* Flat on its own layer. The film already pushes through the curtains, so the
-     box does not move: scaling a <video> for five seconds resamples every frame
-     and reads as a shake on top of the footage. */
-  transform:translateZ(0);
-  transform-origin:50% 46%;
-}
-.vgate__film{
-  display:block;width:100%;height:100%;
-  object-fit:cover;
-  background:#3B0A16;
-}
-/* The still that greets the guest. Cropped from Gate1.jpeg to the clip's own
-   framing, so it sits exactly over frame 0 — it just holds far more detail than
-   the film does. It covers the video until the tap, then fades. */
-.vgate__still{
-  position:absolute;inset:0;
-  display:block;width:100%;height:100%;
-  object-fit:cover;
-  pointer-events:none;
-  opacity:1;
-}
-/* the gold rule the rest of the invitation is framed in */
-.vgate__frame{
-  position:absolute;inset:0;pointer-events:none;
-  border:1px solid rgba(168,135,63,.85);
-  border-radius:inherit;
-  box-shadow:
-    inset 0 0 0 4px rgba(255,246,219,.12),
-    inset 0 0 26px rgba(60,10,22,.34);
-}
-/* a soft cream glaze so the film sits in the page's light rather than
-   punching a hole in it */
-.vgate__sheen{
-  position:absolute;inset:0;pointer-events:none;
-  border-radius:inherit;
-  background:
-    linear-gradient(180deg,rgba(255,250,238,.16) 0%,rgba(255,250,238,0) 26%),
-    radial-gradient(110% 78% at 50% 42%,transparent 52%,rgba(60,10,22,.30) 100%);
-  transition:opacity 1.6s ease;
-}
-
-/* ── Playing ─────────────────────────────────────────── */
-.gate--video.is-playing .gate__bismillah,
-.gate--video.is-playing .gate__caption{
-  animation:fadeAway 1s ease forwards;
-}
-.gate--video.is-playing .vgate__sheen{opacity:.45;}
-/* Hand over to the film once it is moving — a hard swap would read as the
-   picture suddenly going soft. */
-.gate--video.is-playing .vgate__still{
-  opacity:0;
-  transition:opacity .55s ease .18s;
-}
-/* Lands on the last beat of whichever clip is playing. */
-.gate--video.is-playing .gate__glow{
-  animation:burst 2.4s var(--ease-soft) forwards var(--vgate-burst);
-}
-
-/* ── Opening ─────────────────────────────────────────── */
-.gate--video.is-open{
-  transition:opacity .9s ease .12s, visibility .9s ease .12s;
-}
-.gate--video.is-open .doorway--video{
-  animation:pullIn 1.3s var(--ease-door) forwards;
-}
-
-@media (prefers-reduced-motion:reduce){
-  .gate--video.is-playing .gate__glow{animation:none;}
-}
-
-
-/* ══════════════════════════════════════════════════════════════════
    1c. THE PAINTED GATE     (`gate--art` on #gate — the default)
    ──────────────────────────────────────────────────────────────────
    The watercolour in assets/GateOpen1.png, opened. It is not a film:
@@ -1611,8 +1479,8 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
    ────────────────────────────────────────────────────────── */
 .doorway--art{display:none;}
 /* The painting's own pixel frame, for the ratio. js/main.js sets these on
-   #gate from the registry; these are the same numbers, so the box is right
-   before it runs. */
+   #gate from ART; these are the same numbers, so the box is right before it
+   runs. */
 .gate--art{
   --agate-w:923;
   --agate-h:1703;
@@ -1622,11 +1490,10 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
   background:
     radial-gradient(124% 96% at 50% 30%,#FFFDF9 0%,#FCF7ED 42%,#F4EAD7 76%,#E9DBBF 100%);
 }
-.gate--art .doorway--svg,
-.gate--art .doorway--video{display:none;}
+.gate--art .doorway--svg{display:none;}
 .gate--art .doorway--art{
   display:block;
-  /* Taller than the drawn gateway (1.55) and the films: the painting carries
+  /* Taller than the drawn gateway (1.55): the painting carries
      a wide sky above its arch and a bed of lilies below it, so the gate
      itself reads small in a box of the same height. */
   width:min(86vw, calc(var(--dw) * 1.92 * var(--agate-w) / var(--agate-h)));
@@ -1722,10 +1589,10 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
   from{opacity:0;transform:scale(.94);}
   to  {opacity:1;transform:scale(1.06);}
 }
-/* The films are dark, so `burst` can flood the screen and read as light coming
-   through the door. This painting is already pale — flooded with the same gold
-   it simply vanishes — so its burst is a glow through the opening rather than
-   a flash over everything. */
+/* The drawn gate is dark enough behind its ironwork that `burst` can flood the
+   screen and read as light coming through the door. This painting is already
+   pale — flooded with the same gold it simply vanishes — so its burst is a
+   glow through the opening rather than a flash over everything. */
 @keyframes artBurst{
   0%  {opacity:0; transform:translate(-50%,-50%) scale(.15);}
   26% {opacity:.62;}

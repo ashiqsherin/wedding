@@ -41,19 +41,18 @@
 <link rel="stylesheet" href="css/style.css" />
 
 <!-- The gate is the first thing a guest sees, so what it is made of is the one
-     thing worth fetching before anything else. For the painted gate that is
-     three pictures — the scene and its two leaves; for a film gate it is the
-     still. Everything heavier (the film, the nasheed, the couple's clip) is
-     pulled in by js/main.js in that order, once this has painted — see the
-     preloader there.
+     thing worth fetching before anything else: three pictures — the painted
+     scene and its two iron leaves. Everything heavier (the nasheed, the
+     couple's clip) is pulled in by js/main.js in that order, once this has
+     painted — see the preloader there.
 
      They are asked for from a script rather than plain <link>s, and the tags
      below carry no src, because on a metered or 2G line js/main.js serves the
-     hand-drawn gate and none of these pictures is ever shown. That decision
-     has to be made here, in the head: a static <link rel="preload"> or a src=
-     in the markup is found by the preload scanner and already in flight long
-     before any script could call it off. Keep these paths in step with
-     DEFAULT_GATE. -->
+     hand-drawn gate instead and none of these pictures is ever shown. That
+     decision has to be made here, in the head: a static <link rel="preload">
+     or a src= in the markup is found by the preload scanner and already in
+     flight long before any script could call it off. Keep these paths in step
+     with ART in js/main.js. -->
 <script>
   (function () {
     var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -256,15 +255,19 @@
 
 
 <!-- ══════════════════════════ 1. THE GATE ══════════════════════════ -->
-<!-- Three gateways live in the markup below and one class here picks between
-     them: `gate--art` for the painted gate, `gate--video` for a film, and
-     neither for the hand-drawn SVG one. The class written here is the
-     default, so the guest never sees another gateway flash by while the
-     script starts — change it together with DEFAULT_GATE.
+<!-- Two gateways live in the markup below and the `gate--art` class here picks
+     between them: with it, the painted gate; without it, the hand-drawn one.
 
-     Which gate greets the guest is still being chosen: `?gate=art|film1|
-     film2|svg` swaps it (the GATES registry in js/main.js), and gates.html
-     shows them side by side. -->
+     The painting is the gate. The drawn gateway behind it is not a second
+     choice on offer — it is the safety net, shown only when the painting
+     cannot be had: a metered or 2G line, a picture that errors, or ten seconds
+     gone with one still missing. It downloads nothing, so it costs a guest who
+     never sees it nothing at all.
+
+     `gate--art` is written here rather than added by the script so that the
+     drawn gate never flashes by while js/main.js starts; the script takes it
+     straight back off if the painting is not wanted. -->
+<!-- Two filmed gates were tried here too, and both are gone — see the README. -->
 <div class="gate gate--art" id="gate" role="button" tabindex="0"
      aria-label="Tap to open the wedding invitation">
 
@@ -283,32 +286,7 @@
 
     <p class="gate__bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
 
-    <!-- ── Gateway A: the video gate (shown while .gate--video is set) ──
-         What you land on is the sharp still (assets/Gate1.jpeg, cropped to the
-         clip's exact framing) — the film's own first frame is soft. The tap
-         starts playback and the still cross-fades away; the page is revealed
-         when the clip ends. -->
-    <div class="doorway doorway--video">
-      <div class="vgate">
-        <!-- `poster` is set by js/main.js, not here: the parser fetches a
-             static poster even under preload="none", and on a metered line
-             this gate is never shown at all. The still below covers it in
-             every case, so it only ever surfaces if that image fails. -->
-        <video class="vgate__film" id="gateVideo"
-               src="assets/GateOpen2.mp4"
-               muted playsinline preload="none"
-               disablepictureinpicture disableremoteplayback
-               aria-hidden="true"></video>
-        <!-- No src: the head preloads this (and skips it on a metered line),
-             js/main.js hangs it here, and it paints straight from cache. -->
-        <img class="vgate__still" id="gateStill" alt=""
-             width="478" height="850" draggable="false" aria-hidden="true">
-        <span class="vgate__frame" aria-hidden="true"></span>
-        <span class="vgate__sheen" aria-hidden="true"></span>
-      </div>
-    </div>
-
-    <!-- ── Gateway C: the painted gate (shown while .gate--art is set) ──
+    <!-- ── The painted gate (shown while .gate--art is set) ──
          The watercolour, in the three pieces tools/build-gate3.py cuts it
          into: the scene with the ironwork lifted out of it, and the two
          leaves that were lifted. Put back where they belong they are the
@@ -332,7 +310,9 @@
       </div>
     </div>
 
-    <!-- ── Gateway B: the SVG gate — garden beyond → iron leaves → arch → flora -->
+    <!-- ── The drawn gate it falls back to, and what a guest on a thin line is
+         given: garden beyond → iron leaves → arch → flora. Nothing here is a
+         file; it is all SVG and CSS, which is the whole point of it. -->
     <div class="doorway doorway--svg">
 
       <!-- 1. the garden that lies beyond, seen through the ironwork -->
@@ -525,7 +505,7 @@
         Tap anywhere to open
       </p>
 
-      <!-- Stands in for the call to action while the gate film is still coming
+      <!-- Stands in for the call to action while the painting is still coming
            down the wire. `is-waiting` on #gate swaps the two. On a fast line
            this never appears; on a slow one it is the difference between a
            guest waiting and a guest thinking the page is broken. -->
@@ -568,12 +548,18 @@
         <div class="portrait__halo" aria-hidden="true"></div>
         <div class="portrait__arch">
           <!-- No `src` and no `autoplay`: this clip sits behind the gate, so
-               fetching it on page load would compete with the gate film for a
-               phone's one slow pipe. js/main.js moves data-src into src once
-               the gate is open and the arch is near the viewport, and drops the
-               clip altogether on a metered or very slow connection — the poster
-               alone is a perfectly good portrait. -->
-          <video data-src="assets/couple.mp4" width="960" height="540"
+               fetching it on page load would compete with the gate's pictures
+               for a phone's one slow pipe. js/main.js moves data-src into src
+               once the gate is open and the arch is near the viewport, and
+               drops the clip altogether on a metered or very slow connection —
+               the poster alone is a perfectly good portrait.
+
+               600×720, not the 1280×720 that was shot: the arch is a 1:1.2 box
+               and `object-fit:cover` throws away everything outside the central
+               47% of the width, so those columns were never once rendered. Crop
+               them in the file and the clip is 43% lighter for nothing given
+               up. Widen .portrait__arch's ratio and this needs re-cutting. -->
+          <video data-src="assets/couple.mp4" width="600" height="720"
                  data-poster="assets/images/couple.jpeg"
                  muted loop playsinline preload="none"
                  aria-label="Muhammed Ashiq and Fathima Sherin"></video>
