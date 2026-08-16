@@ -27,6 +27,9 @@ js/api.js                      talks to the Google Apps Script that stores repli
 js/admin.js                    the dashboard — totals, table, CSV export
 apps-script/Code.gs            the script itself, for reference (not used by the site)
 site.webmanifest               name + icons for "Add to Home Screen"
+assets/GateOpen1.png           the gate painting, as supplied
+assets/gate3-*.{jpg,png}       the pieces it is cut into — see The gate, below
+tools/build-gate3.py           cuts them; re-run it if the painting changes
 assets/images/couple.jpeg      the portrait (cropped from ashiq-sherin.jpeg)
 assets/images/og-banner.jpg    the 1200×630 WhatsApp share picture
 assets/favicon.svg             tab icon (+ the png sizes beside it)
@@ -38,10 +41,61 @@ ashiq-sherin.jpeg              your original artwork, kept untouched
 
 ## The gate
 
-The opening screen is a wrought-iron garden gate under a classical stone arch,
-drawn in CSS and SVG — not a picture — so it stays sharp on every screen. You can
-see the garden through the ironwork before you tap. Tapping anywhere plays the
-music and starts a slow ~8-second sequence:
+The opening screen a guest lands on is **the painted gate** — the watercolour in
+`assets/GateOpen1.png`, opened. It is not a film and not a slideshow: the page
+holds the picture in three pieces and swings two of them.
+
+| Piece | What it is |
+|---|---|
+| `assets/gate3-scene.jpg` | the painting with the ironwork lifted out of it — arch, columns, lanterns, lilies and the maroon flourishes exactly as painted, and behind where the iron stood, the light |
+| `assets/gate3-leaf-l.png` | the left half of the ironwork, ink on transparency |
+| `assets/gate3-leaf-r.png` | the right half |
+
+Laid back in place the three *are* the original painting, to the pixel — the
+guest sees the artwork untouched. Then the two leaves turn on their hinges, the
+light behind them comes up through the openwork, and the view is drawn through
+the opening. Tapping anywhere plays the music and starts a ~5-second sequence:
+
+| Time | What happens |
+|---|---|
+| 0.0s | music starts, the bismillah and caption fade away |
+| 0.2s | the two leaves begin a 3.4s swing inward, back against the columns |
+| 0.5s | the light beyond comes up through the ironwork |
+| 2.6s | a golden glow blooms through the opening |
+| 2.9s | the view begins drifting through the archway |
+| 4.5s | the gate dissolves into the invitation |
+
+That timeline lives in a comment on the `1c. THE PAINTED GATE` block in
+[`css/style.css`](css/style.css), and `openArt()` in
+[`js/main.js`](js/main.js) is keyed to it. If you change one, change both.
+
+The three pieces are cut by [`tools/build-gate3.py`](tools/build-gate3.py) —
+run it again after editing the artwork:
+
+```bash
+python3 tools/build-gate3.py assets/
+```
+
+It reads `assets/GateOpen1.png` and works from one rectangle, the door opening
+between the two lantern posts, written at the top of the script. Everything
+keys off that: the scene loses exactly what the leaves gain, so the two still
+add up to the original. The same rectangle is written into the percentages on
+`.agate__light` and `.agate__leaf--l/--r` in the CSS — move it in one place and
+it must move in the other. The script also prints the worst pixel it can find
+between the reassembled gate and the original, and drops proof sheets beside
+its output.
+
+There is **no frame and no border** anywhere on it: the paper is masked away at
+its own edges instead, so the flourishes and lilies at the sides carry on into
+the page's cream rather than stopping at a rectangle.
+
+### The hand-drawn gate
+
+Behind it, and still in the page, is the original: a wrought-iron garden gate
+under a classical stone arch, drawn in CSS and SVG — not a picture — so it stays
+sharp on every screen, and downloads nothing at all. It is what a guest on a
+metered or 2G line is given, and `?gate=svg` calls it up. You can see the garden
+through the ironwork before you tap. Its sequence is slower, ~8 seconds:
 
 | Time | What happens |
 |---|---|
@@ -52,7 +106,7 @@ music and starts a slow ~8-second sequence:
 | 4.4s | the view begins drifting through the archway |
 | 6.5s | the gate dissolves into the invitation |
 
-The full timeline is written out in a comment on the `.gate` rule in
+That one is written out in a comment on the `.gate` rule in
 [`css/style.css`](css/style.css); the two JS timers in
 [`js/main.js`](js/main.js) are keyed to it. If you change one, change both.
 
@@ -81,42 +135,109 @@ They live in one place, the `GATES` registry at the top of
 
 | Key | What it is |
 |---|---|
-| `film2` | `assets/GateOpen2.mp4` — pillared gate with roses, 10s. **The default.** |
+| `art` | the painted gate above, opened by the page itself. **The default.** |
+| `film2` | `assets/GateOpen2.mp4` — pillared gate with roses, 10s |
 | `film1` | `assets/gate-opening.mp4` — maroon & gold arch, 8.1s |
-| `svg` | the hand-drawn gate described above |
+| `svg` | the hand-drawn gate |
+
+Each entry says which `kind` it is — `art`, `film` or `svg` — and that is what
+picks the gateway: three of them live in the markup of
+[`index.html`](index.html), and one class on `#gate` (`gate--art`,
+`gate--video`, or neither) chooses between them.
 
 `?gate=<key>` on any address picks one for that visit — `index.html?gate=film2`.
 An unknown key or no parameter at all falls back to `DEFAULT_GATE`, so the plain
 address a guest is given never depends on this.
 
-To add a gate, drop the clip in `assets/`, pull a poster from its first frame
+To add a film, drop the clip in `assets/`, pull a poster from its first frame
 (`ffmpeg -i assets/yours.mp4 -frames:v 1 -q:v 2 assets/yours-poster.jpg`) and add
-an entry with its `w`/`h` and length in seconds. The doorway takes its ratio from
-`w`/`h` and the golden burst is timed from `secs`, so nothing in the CSS needs
-touching and the film keeps the exact height the drawn gate occupied. The new
-gate appears on `gates.html` on its own.
+an entry with `kind: 'film'`, its `w`/`h` and its length in seconds. The doorway
+takes its ratio from `w`/`h` and the golden burst is timed from `secs`, so
+nothing in the CSS needs touching and the film keeps the exact height the drawn
+gate occupied. The new gate appears on `gates.html` on its own.
 
-**To finalise a choice**, set `DEFAULT_GATE` to that key, and change the `src`,
-`poster` and the still's `width`/`height` on the `.doorway--video` block in
-[`index.html`](index.html) plus the three `--vgate-*` defaults on the
-`.gate--video` rule to match — otherwise the guest sees the old gate's still for
-the moment before the script runs. The losing gates stay in the registry in case
-you change your mind.
+**To finalise a choice**, set `DEFAULT_GATE` to that key, then match it in
+[`index.html`](index.html): the class on `#gate`, and the paths the head's
+preload script fetches (the three pictures for the painted gate, the poster for
+a film). For a film also set the `src` on `#gateVideo`, the still's
+`width`/`height`, and the three `--vgate-*` defaults on the `.gate--video` rule
+in the CSS. Miss the preload and nothing breaks — the pictures simply arrive
+later than they need to. The losing gates stay in the registry in case you
+change your mind.
 
 ## Sound
 
 Only your music file plays — there are no sound effects.
 
-`assets/audio/music.mp3` plays the **0:13 → 4:29** section on loop, fading in
-over 0.8s. The player detects whether you gave it the full track or a file
-already trimmed to that section and does the right thing either way — see
-[`assets/audio/README.md`](assets/audio/README.md). Remove the file and the page
-still works; the music button just reports it missing.
+The track plays the **0:13 → 4:29** section on loop, fading in over 0.8s. There
+are two copies of it — `assets/audio/music.m4a` and `assets/audio/music.mp3` —
+and the page picks the AAC one wherever it will play, which is nearly
+everywhere and about a third smaller. The player also detects whether you gave
+it the full track or a file already trimmed to that section and does the right
+thing either way — see [`assets/audio/README.md`](assets/audio/README.md).
+Remove both files and the page still works; the music button just reports it
+missing.
 
 Browsers only allow audio after a user gesture, so playback starts on the tap
 that opens the gate — that tap is what makes it legal, so it can't start any
 earlier. The button bottom-right toggles it, and music pauses when the tab goes
 to the background.
+
+## Weight, and slow connections
+
+Most guests open this on a phone, on mobile data. The page is built so that
+nothing heavy is ever fetched before it is needed, and so that a bad line
+degrades into something that still looks deliberate.
+
+**What loads, and when.** Only the gate itself is fetched up front — its three
+pictures, 470 KB. Everything else waits its turn.
+
+| | | |
+|---|---|---|
+| the painted scene | 310 KB | preloaded in the head, at high priority |
+| its two leaves | 160 KB | preloaded right behind it; the guest waits on these |
+| the nasheed | 1.9 MB | connection opened once the gate is down, played on the tap |
+| couple's clip | 664 KB | only once the gate is open and the arch is in view |
+
+So a guest can tap the gate after ~470 KB rather than the ~12.8 MB the page
+used to pull before it would do anything. (A film gate instead of the painted
+one is 74 KB of still plus 644 KB of clip, and the guest waits on the clip.)
+
+**While the gate comes down the wire**, the "tap anywhere to open" line is
+replaced by a gold progress bar and *Preparing your invitation…*, and the
+doorway is held back until all three pictures have landed — a gate that painted
+its scene before its leaves would stand open before it was touched. Tapping
+during the wait is not ignored: it starts the music, says *Almost there…*, and
+opens the moment the gate is ready. The bar shows real progress where the
+browser reports it — buffered bytes for a film, pictures landed for the painted
+gate — and a slow creep where it does not, so it never sits still.
+
+**If the gate cannot be had** — 10 seconds gone with a film under 60% buffered
+or a picture still missing, or a straight error on any of them — the guest is
+quietly handed the hand-drawn SVG gate instead, which is pure CSS and downloads
+nothing. They never learn there was another one.
+
+**On Data Saver or a 2G-class line** (`navigator.connection`, Chromium only)
+that swap happens up front, and the couple's clip is never fetched at all — its
+poster stands in and reads as a portrait in its own right. Such a guest
+downloads no video and none of the gate's pictures: about 180 KB in total, and
+the music only if they ask for it. `?gate=` still overrides this, so every gate
+can be reviewed on any connection from `gates.html`.
+
+The same restraint is why `#gateVideo` carries no `poster` and why `#gateStill`,
+`#gateScene` and the two leaves carry no `src` in the markup: the preload
+scanner fetches all of them while parsing, long before any script could decide
+they were not wanted. Anything that must be skipped on a thin line has to be
+hung on its element by JavaScript.
+
+**Re-encoding.** The clips are H.264, silent (the gate films had unused audio
+tracks), and written with `-movflags +faststart` so playback can begin before
+the file is down:
+
+```bash
+ffmpeg -i in.mp4 -an -c:v libx264 -preset veryslow -crf 26 \
+       -profile:v main -pix_fmt yuv420p -movflags +faststart out.mp4
+```
 
 ## The WhatsApp link preview
 

@@ -6,12 +6,17 @@
 
   /* ─────────────────────────── CONFIG ─────────────────────────── */
   var CONFIG = {
-    // Background nasheed. Drop your file at this path (see assets/audio/README.md).
-    audioSrc: 'assets/audio/music.mp3',
+    // Background nasheed — two encodes of the same track (see
+    // assets/audio/README.md). AAC is the smaller of the two and sounds better
+    // at this bitrate; the MP3 is there for anything that cannot play it.
+    audio: {
+      aac: 'assets/audio/music.m4a',
+      mp3: 'assets/audio/music.mp3'
+    },
     // Play only this slice of the track, on loop.
     clipStart: 13,      // 0:13
     clipEnd: 269,       // 4:29
-    volume: 0.55,
+    volume: 0.38,
     fadeMs: 800,        // short fade so the music is audible right after the tap
 
     // Countdown target — Nikkah, 18 Dec 2026, 12:30 IST (UTC+05:30)
@@ -21,7 +26,14 @@
 
     // RSVP. The endpoint URL and submit token live in js/api.js.
     rsvpMax: 20,                        // largest party the stepper allows
-    rsvpKey: 'ashiq-sherin-rsvp'        // localStorage: "this browser replied"
+    rsvpKey: 'ashiq-sherin-rsvp',       // localStorage: "this browser replied"
+
+    // How long we will wait for the gate — the film to buffer, or the painted
+    // gate's three pictures to land — before giving up on it. Past this, a
+    // guest who has barely anything is handed the hand-drawn gate instead: it
+    // costs no bandwidth at all.
+    filmWaitMs: 10000,
+    filmEnough: 0.6                     // buffered fraction that counts as ready
   };
 
   /* ── The gates on offer ───────────────────────────────────────
@@ -30,31 +42,52 @@
      address never depends on this. gates.html lays them out side by
      side to compare.
 
-       src     the clip
-       poster  the sharp still the guest lands on, held over frame 0
-       w / h   the clip's own frame, so the doorway keeps its ratio
-       secs    its length — the burst is timed to land just inside it
-       label   how it reads in the chooser
-     A gate with no `src` is the hand-drawn SVG one. */
+     There are three kinds, and `kind` says which:
+
+       'art'    a painting the page itself opens. `scene` is the picture
+                with the ironwork lifted out of it and `leafL`/`leafR`
+                are the two halves that were lifted; laid back in place
+                they are the original painting, and the page swings them.
+                tools/build-gate3.py cuts the three from the artwork.
+       'film'   a clip. `src` is the film, `poster` the sharp still the
+                guest lands on, held over frame 0, and `secs` its length
+                — the burst is timed to land just inside it.
+       'svg'    the hand-drawn gateway, drawn in index.html. No files.
+
+     `w`/`h` is the picture's own frame, so the doorway keeps its ratio,
+     `poster` is the still gates.html shows on the card, and `label` is
+     how it reads there. */
   var GATES = {
+    art: {
+      label: 'The painted gate — lilies & maroon',
+      kind: 'art',
+      scene: 'assets/gate3-scene.jpg',
+      leafL: 'assets/gate3-leaf-l.png',
+      leafR: 'assets/gate3-leaf-r.png',
+      poster: 'assets/gate3-poster.jpg',
+      w: 923, h: 1703
+    },
     film1: {
       label: 'Film I — maroon & gold arch',
+      kind: 'film',
       src: 'assets/gate-opening.mp4',
       poster: 'assets/gate-poster.jpg',
       w: 578, h: 1012, secs: 8.13
     },
     film2: {
       label: 'Film II — pillared gate, roses',
+      kind: 'film',
       src: 'assets/GateOpen2.mp4',
       poster: 'assets/gate2-poster.jpg',
       w: 478, h: 850, secs: 10
     },
     svg: {
       label: 'The hand-drawn gate',
+      kind: 'svg',
       src: null
     }
   };
-  var DEFAULT_GATE = 'film2';
+  var DEFAULT_GATE = 'art';
 
   /* The chosen gate, or the default when ?gate= is missing or unknown. */
   function pickGate() {
@@ -67,6 +100,25 @@
     key = key && GATES[key] ? key : DEFAULT_GATE;
     return { key: key, gate: GATES[key] };
   }
+
+  /* ── What the guest's connection can bear ─────────────────────
+     Many of these invitations are opened on a phone, on mobile data, in a
+     village. Data Saver switched on — or a 2G-class line — means the films are
+     a liability rather than a welcome: that guest gets the hand-drawn gate,
+     which is pure CSS and SVG and downloads nothing, and the couple's clip
+     never loads at all (its poster is a perfectly good portrait on its own).
+     Only Chromium reports any of this; everywhere else we assume a normal
+     line and let the preloader below decide by what actually arrives.
+
+     The head of index.html has already worked this out — it has to, to decide
+     whether to preload the gate's still — so take its answer, and only work it
+     out again if that script is somehow not there. */
+  var thinPipe = (function () {
+    if (typeof window.__thinPipe === 'boolean') return window.__thinPipe;
+    var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!c) return false;
+    return !!c.saveData || c.effectiveType === 'slow-2g' || c.effectiveType === '2g';
+  })();
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $  = function (s, c) { return (c || document).querySelector(s); };
@@ -109,17 +161,32 @@
       try { el.currentTime = clipStart; } catch (e) {}
     }
 
-    function load() {
+    /* AAC where it will play, MP3 otherwise. Same track, but the AAC file is
+       roughly two thirds the size — worth the two lines on a metered phone. */
+    function pickSrc() {
+      var can = el.canPlayType && el.canPlayType('audio/mp4; codecs="mp4a.40.2"');
+      return (can === 'probably' || can === 'maybe') ? CONFIG.audio.aac : CONFIG.audio.mp3;
+    }
+
+    /* Start pulling the track down without playing it. Called once the gate is
+       out of the way, so the nasheed is already buffering by the time anyone
+       reaches for the music button — and `play()` upgrades this to `auto`. */
+    function warm() {
+      if (loaded || thinPipe) return;
+      load('metadata');
+    }
+
+    function load(how) {
       if (loaded) return;
       loaded = true;
-      el.preload = 'auto';
-      el.src = CONFIG.audioSrc;
+      el.preload = how || 'auto';
+      el.src = pickSrc();
       el.volume = 0;
 
       el.addEventListener('error', function () {
         available = false;
         btn.setAttribute('aria-pressed', 'false');
-        btn.title = 'Music file not found — add assets/audio/music.mp3';
+        btn.title = 'Music file not found — add assets/audio/music.m4a';
       });
 
       el.addEventListener('loadedmetadata', function () {
@@ -154,6 +221,7 @@
 
     function play() {
       load();
+      el.preload = 'auto';        // warm() may have left this at 'metadata'
       if (!available) return;
       var p = el.play();
       if (p && p.catch) {
@@ -187,7 +255,66 @@
       }
     });
 
-    return { play: play, pause: pause, toggle: toggle };
+    return { play: play, pause: pause, toggle: toggle, warm: warm };
+  })();
+
+
+  /* ═════════════ THE COUPLE'S CLIP, ONLY WHEN WANTED ═════════════
+     It sits at the top of the page — behind the gate. Loading it with the page
+     would have it fighting the gate film for a phone's single slow pipe, so
+     index.html parks its address in data-src and it is moved into src only
+     once the gate is open and the arch is near the viewport. It is never
+     fetched at all on a metered or 2G line, or for a guest who has asked for
+     less motion: the poster is a portrait in its own right and nobody can tell
+     it is standing in. Off-screen, it pauses — this page is read one-handed on
+     a phone that is probably low on battery. */
+  var Portrait = (function () {
+    var v = $('.portrait__arch video');
+    var started = false;
+
+    /* The poster, which every guest sees — the one on a 2G line most of all,
+       because for them it is the whole portrait. Held back out of the markup
+       only so it does not race the gate film for the same pipe; warm() is
+       called the moment the gate has what it needs, which is well before the
+       hero is revealed, so it is in cache by the time anyone looks. */
+    function warm() {
+      if (!v) return;
+      var poster = v.getAttribute('data-poster');
+      if (!poster) return;
+      v.removeAttribute('data-poster');
+      v.poster = poster;
+    }
+
+    function begin() {
+      var src = v.getAttribute('data-src');
+      if (!src) return;
+      v.removeAttribute('data-src');
+      v.preload = 'auto';
+      v.src = src;
+      play();
+    }
+
+    // muted + playsinline, so this is permitted without a gesture. It can
+    // still be refused (low power mode); the poster stays put if so.
+    function play() { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+
+    function start() {
+      if (started || !v) return;
+      started = true;
+      warm();                                    // in case the gate never got there
+      if (thinPipe || reduceMotion) return;      // the poster alone
+
+      if (!('IntersectionObserver' in window)) { begin(); return; }
+
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) { if (!v.paused) v.pause(); return; }
+          if (v.getAttribute('data-src')) begin(); else play();
+        });
+      }, { rootMargin: '200px 0px' }).observe(v);
+    }
+
+    return { start: start, warm: warm };
   })();
 
 
@@ -197,31 +324,64 @@
     var page = $('#page');
     var video = $('#gateVideo');
     var still = $('#gateStill');
+    var scene = $('#gateScene');
+    var leafL = $('#gateLeafL');
+    var leafR = $('#gateLeafR');
     var opened = false;
 
-    // Two gates live in the markup. `gate--video` on #gate picks the film;
-    // without it the hand-drawn SVG gate runs exactly as it always has.
-    // If the film can't load we drop back to the SVG gate on the spot.
+    // Three gateways live in the markup and one class picks between them:
+    // `gate--art` for the painted gate, `gate--video` for a film, neither for
+    // the hand-drawn SVG one. If what a gate needs can't be had we drop back
+    // to the SVG gate on the spot — it needs nothing.
     var chosen = pickGate();
-    var film = chosen.gate.src ? chosen.gate : null;
-    var useVideo = !!film && !!video;
+    var kind = chosen.gate.kind || (chosen.gate.src ? 'film' : 'svg');
 
-    // `?gate=svg` sends the guest to the hand-drawn one instead.
-    if (!film) gate.classList.remove('gate--video');
-    else gate.classList.add('gate--video');
+    // A metered or 2G-class connection is handed the hand-drawn gate, which
+    // downloads nothing at all. `?gate=` still wins, so any gate can be
+    // checked on any connection from gates.html.
+    if (thinPipe && !/[?&]gate=/.test(window.location.search)) kind = 'svg';
+
+    // Whatever the registry says, a gateway that isn't in the markup can't run.
+    if (kind === 'film' && !video) kind = 'svg';
+    if (kind === 'art' && !(scene && leafL && leafR)) kind = 'svg';
+
+    var film = kind === 'film' ? chosen.gate : null;
+    var art  = kind === 'art'  ? chosen.gate : null;
+    var useVideo = !!film;
+
+    if (kind === 'film') gate.classList.add('gate--video');
+    else gate.classList.remove('gate--video');
+    if (kind === 'art') gate.classList.add('gate--art');
+    else gate.classList.remove('gate--art');
+
+    if (art) {
+      // Dress the doorway for this painting: its three pieces and its own
+      // frame, so the box keeps the artwork's ratio. The pictures are hung
+      // here rather than in the markup — see the notes in index.html — and
+      // for the default gate they are already in cache from the head's
+      // preload, so they paint on the spot.
+      scene.src = art.scene;
+      leafL.src = art.leafL;
+      leafR.src = art.leafR;
+      gate.style.setProperty('--agate-w', String(art.w));
+      gate.style.setProperty('--agate-h', String(art.h));
+    }
 
     if (useVideo) {
       // Dress the doorway for this particular clip: its source, its still, its
       // frame (so the box keeps the film's ratio) and the beat the burst lands
       // on — a little before the end, whatever the length.
-      if (video.getAttribute('src') !== film.src) {
-        video.src = film.src;
-        video.poster = film.poster;
-        if (still) {
-          still.src = film.poster;
-          still.width = film.w;
-          still.height = film.h;
-        }
+      if (video.getAttribute('src') !== film.src) video.src = film.src;
+
+      // Both of these are hung here rather than in the markup — see the notes
+      // on #gateVideo and #gateStill in index.html. For the default gate the
+      // picture is already in cache from the head's preload, so it paints on
+      // the spot; the two share the one file and so the one request.
+      video.poster = film.poster;
+      if (still) {
+        still.src = film.poster;
+        still.width = film.w;
+        still.height = film.h;
       }
       gate.style.setProperty('--vgate-w', String(film.w));
       gate.style.setProperty('--vgate-h', String(film.h));
@@ -234,9 +394,166 @@
       video.load();
 
       video.addEventListener('error', function () {
-        if (!opened) { gate.classList.remove('gate--video'); useVideo = false; }
+        if (!opened) { toSvgGate(); }
       });
     }
+
+    /* Give up on whatever the chosen gate needed and hand the guest the
+       hand-drawn one. Safe at any point before the gate has started opening;
+       after that we let it finish. */
+    function toSvgGate() {
+      if (opened || kind === 'svg') return;
+      if (useVideo) {
+        video.removeAttribute('src');
+        video.load();                     // stop the download there and then
+      }
+      kind = 'svg';
+      useVideo = false;
+      film = null;
+      art = null;
+      gate.classList.remove('gate--video');
+      gate.classList.remove('gate--art');
+      ready.settle();
+    }
+
+    /* ══════════════ WAITING FOR THE GATE ══════════════
+       On a good line the gate is there before the guest has finished reading
+       the names and none of this shows. On a slow one they would otherwise be
+       looking at a still with "tap anywhere to open" under it, tapping, and
+       getting nothing — so while it comes down the wire we say so, and show
+       how far along it is.
+
+       Both kinds of gate wait the same way; only the reading differs. A film
+       reports how much of itself is buffered and can start on part of it; the
+       painted gate's three pictures either arrived or they did not.
+
+       The bar takes the larger of two numbers: that reading, and a creep that
+       eases toward 92% and never arrives. The creep covers the stretch before
+       anything is known (when a real reading would sit at zero) and browsers
+       that report nothing useful; the real figure takes over the moment it
+       overtakes it. */
+    var ready = (function () {
+      var wait  = $('#gateWait');
+      var fill  = $('#gateWaitFill');
+      var text  = $('#gateWaitText');
+      var done  = false;
+      var creep = 0;
+      var ticker = null;
+      var capTimer = null;
+      var waiting = false;
+      var pics = 0;                     // painted gate: pictures that have landed
+
+      /* How much of the clip is on the guest's phone, 0–1. */
+      function buffered() {
+        if (!isFinite(video.duration) || video.duration <= 0) return 0;
+        var b = video.buffered;
+        if (!b || !b.length) return 0;
+        return Math.min(1, b.end(b.length - 1) / video.duration);
+      }
+
+      /* How much of what this gate needs has arrived, 0–1. */
+      function have() {
+        if (useVideo) return buffered();
+        if (art) return pics / 3;
+        return 1;
+      }
+
+      /* Enough to open on. */
+      function enough() {
+        return useVideo ? buffered() >= CONFIG.filmEnough : have() >= 1;
+      }
+
+      function paint() {
+        creep += (0.92 - creep) * 0.05;
+        var pct = Math.max(creep, have());
+        if (fill) fill.style.width = (pct * 100).toFixed(0) + '%';
+      }
+
+      /* Ready enough to open on. */
+      function settle() {
+        if (done) return;
+        done = true;
+        clearInterval(ticker);
+        clearTimeout(capTimer);
+        if (fill) fill.style.width = '100%';
+        gate.classList.remove('is-waiting');
+        gate.classList.add('is-ready');   // the painted doorway rises on this
+        if (wait) wait.hidden = true;
+        // The gate is down and the pipe is free. Queue up what the guest meets
+        // on the other side of it, heaviest last.
+        Portrait.warm();
+        Music.warm();
+        if (pending) open();            // they tapped while we were still waiting
+      }
+
+      /* `canplaythrough` is the browser's own verdict; `progress` lets us
+         settle as soon as enough of a ten-second clip is down that it will
+         play without stalling, which on a slow line comes much sooner. */
+      function watchFilm() {
+        video.addEventListener('canplaythrough', settle);
+        video.addEventListener('progress', function () {
+          if (enough()) settle();
+        });
+
+        // A second visit has the clip in cache, and `canplaythrough` may
+        // already have fired before this listener existed. Without this the
+        // returning guest would sit through the full wait for nothing.
+        if (video.readyState >= 4 || enough()) settle();
+      }
+
+      /* The pictures only say when they are there. One of them missing would
+         leave a gate with a hole in it, so any failure hands the guest the
+         drawn gate rather than a broken painting. */
+      function watchArt() {
+        [scene, leafL, leafR].forEach(function (img) {
+          // Cached from a previous visit, or already decoded while we were
+          // getting here: `load` will not fire again for those.
+          if (img.complete && img.naturalWidth) { pics++; return; }
+          img.addEventListener('load', function () {
+            pics++;
+            if (enough()) settle();
+          });
+          img.addEventListener('error', function () {
+            if (!opened) toSvgGate();
+          });
+        });
+        if (enough()) settle();
+      }
+
+      function start() {
+        waiting = true;
+        gate.classList.add('is-waiting');
+        if (wait) wait.hidden = false;
+        ticker = setInterval(paint, 220);
+        paint();
+
+        if (useVideo) watchFilm(); else if (art) watchArt();
+
+        // Nothing worth having after ten seconds — stop asking the guest to
+        // wait on a gate that is not coming and give them the drawn one.
+        capTimer = setTimeout(function () {
+          if (done) return;
+          if (!enough()) toSvgGate();
+          else settle();
+        }, CONFIG.filmWaitMs);
+      }
+
+      return {
+        start: start,
+        settle: settle,
+        isWaiting: function () { return waiting && !done; },
+        say: function (msg) { if (text) text.textContent = msg; }
+      };
+    })();
+
+    // A tap that lands before the gate is ready. The gesture is not wasted —
+    // open() starts the music on it, which is what needs a gesture — but the
+    // doors hold until there is something to open.
+    var pending = false;
+
+    // The drawn gate has nothing to wait on, so nothing to queue behind.
+    if (useVideo || art) ready.start();
+    else { Portrait.warm(); Music.warm(); }
 
     // Hands the page over once the gate has finished its business.
     function reveal(liveAt, removeAt) {
@@ -246,6 +563,7 @@
         page.setAttribute('aria-hidden', 'false');
         window.scrollTo(0, 0);
         startPetals();
+        Portrait.start();
       }, reduceMotion ? 60 : liveAt);
 
       setTimeout(function () {
@@ -293,14 +611,36 @@
       reveal(4800, 7900);
     }
 
+    /* ── C. the painted gate ────────────────────────────── */
+    // The leaves turn, the light behind them comes up and the view is drawn
+    // through the opening — all of it in CSS, so there is nothing to wait on
+    // here beyond the clock.
+    function openArt() {
+      gate.classList.add('is-open');
+
+      // Matches the painted-gate timeline in css/style.css (fade ends at 5.5s).
+      reveal(3200, 5600);
+    }
+
     function open() {
       if (opened) return;
-      opened = true;
 
-      // Music first — this is the user gesture that permits playback.
+      // Music first — this is the user gesture that permits playback, and it
+      // has to run on the tap itself even if the doors are about to hold.
       Music.play();
 
-      if (useVideo) openVideo(); else openSvg();
+      // Tapped before the gate is down. Say so rather than doing nothing, and
+      // let ready.settle() call straight back in here the moment there is
+      // something to open.
+      if (ready.isWaiting()) {
+        if (!pending) { pending = true; ready.say('Almost there…'); }
+        return;
+      }
+
+      opened = true;
+      if (useVideo) openVideo();
+      else if (art) openArt();
+      else openSvg();
     }
 
     gate.addEventListener('click', open);

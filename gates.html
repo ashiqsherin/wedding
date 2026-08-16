@@ -227,7 +227,19 @@
       var stage = document.createElement('div');
       stage.className = 'card__stage';
 
-      if (g.src) {
+      if (!g.src && g.poster) {
+        // A gate the page opens itself — the painted one. There is no film to
+        // preview, so the card shows it shut, as the guest first meets it.
+        var shut = document.createElement('img');
+        shut.src = g.poster;
+        shut.alt = '';
+        stage.appendChild(shut);
+        stage.style.cursor = 'default';
+        // The films are dark and sit well in the wine letterbox; a painting on
+        // cream paper does not.
+        stage.style.background = 'var(--cream-200)';
+        shut.style.background = 'transparent';
+      } else if (g.src) {
         var video = document.createElement('video');
         video.src = g.src;
         video.poster = g.poster;
@@ -282,7 +294,10 @@
       meta.innerHTML = g.src
         ? g.secs.toFixed(1) + 's &nbsp;&middot;&nbsp; ' + g.w + ' &times; ' + g.h +
           ' &nbsp;&middot;&nbsp; <b>?gate=' + key + '</b>'
-        : 'No file &nbsp;&middot;&nbsp; <b>?gate=' + key + '</b>';
+        : g.poster
+          ? 'Opened by the page &nbsp;&middot;&nbsp; ' + g.w + ' &times; ' + g.h +
+            ' &nbsp;&middot;&nbsp; <b>?gate=' + key + '</b>'
+          : 'No file &nbsp;&middot;&nbsp; <b>?gate=' + key + '</b>';
 
       var actions = document.createElement('div');
       actions.className = 'card__actions';

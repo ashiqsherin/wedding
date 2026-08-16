@@ -301,6 +301,33 @@ img{display:block;max-width:100%;height:auto;}
   content:"";position:absolute;inset:28%;border-radius:50%;background:var(--wine-600);
 }
 
+/* ── "still loading" ─────────────────────────────────────
+   Shown in the call to action's place while the gate film buffers. The bar
+   tracks real buffered bytes where the browser reports them and falls back to
+   a slow creep where it does not, so it never sits still and never claims to
+   be finished before it is. */
+.gate.is-waiting .gate__cta{display:none;}
+.gate__wait{
+  margin:0;display:inline-flex;flex-direction:column;align-items:center;gap:.5rem;
+}
+.gate__wait[hidden]{display:none;}   /* a display of our own outranks the UA's */
+.gate__waitbar{
+  display:block;width:clamp(88px,30vw,140px);height:2px;
+  border-radius:2px;overflow:hidden;
+  background:rgba(110,84,36,.22);
+}
+.gate__waitbar i{
+  display:block;height:100%;width:0;
+  background:var(--gold-grad);
+  transition:width .45s ease;
+}
+.gate__waittext{
+  font-family:var(--f-caps);
+  font-size:clamp(.56rem,2.2vw,.7rem);
+  letter-spacing:.28em;text-transform:uppercase;
+  color:var(--gold-500);text-indent:.28em;
+}
+
 /* ── Opening sequence ────────────────────────────────── */
 .gate.is-open{opacity:0;visibility:hidden;}
 .gate.is-open .leaf--left {animation:leafOpenL 6.5s var(--ease-door) forwards;}
@@ -1495,4 +1522,170 @@ button.btn[disabled]:hover{transform:none;box-shadow:none;}
 
 @media (prefers-reduced-motion:reduce){
   .gate--video.is-playing .gate__glow{animation:none;}
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   1c. THE PAINTED GATE     (`gate--art` on #gate — the default)
+   ──────────────────────────────────────────────────────────────────
+   The watercolour in assets/GateOpen1.png, opened. It is not a film:
+   the picture arrives in three pieces and the page swings two of them.
+
+     gate3-scene.jpg    the painting with the two leaves lifted out of
+                        it — arch, columns, lanterns, lilies and the
+                        maroon flourishes, all exactly as painted, and
+                        behind where the iron was, the light
+     gate3-leaf-l.png   the left half of the ironwork, ink on nothing
+     gate3-leaf-r.png   the right half
+
+   Laid back in place the three are the original picture to the pixel;
+   the leaves then turn on their hinges and the light behind them comes
+   up through the openwork. tools/build-gate3.py cuts them, and the
+   window they sit in is written into the percentages below — change
+   one and the other must follow.
+
+   No frame, no rule, no rounded corner: the paper is masked away at
+   its edges instead, so the flourishes and lilies at the sides carry
+   on into the page's own cream rather than stopping at a border.
+
+   ── Painted-gate timeline (all times from the tap) ────────
+   0.00s  music starts, bismillah + caption fade away
+   0.18s  the two leaves begin their 3.4s swing inward
+   0.50s  the light beyond comes up through the ironwork
+   2.60s  golden burst blooms through the opening
+   2.90s  the view begins moving through the doorway
+   3.20s  the page underneath goes live (js/main.js)
+   4.50s  the gate itself fades away
+   5.60s  gate removed from the DOM (js/main.js)
+   ────────────────────────────────────────────────────────── */
+.doorway--art{display:none;}
+/* The painting's own pixel frame, for the ratio. js/main.js sets these on
+   #gate from the registry; these are the same numbers, so the box is right
+   before it runs. */
+.gate--art{
+  --agate-w:923;
+  --agate-h:1703;
+  /* The painting is on near-white paper. Against the standard backdrop it
+     reads as a bright slab laid on the page, so the light behind this gate is
+     lifted to meet it and the two become one sheet. */
+  background:
+    radial-gradient(124% 96% at 50% 30%,#FFFDF9 0%,#FCF7ED 42%,#F4EAD7 76%,#E9DBBF 100%);
+}
+.gate--art .doorway--svg,
+.gate--art .doorway--video{display:none;}
+.gate--art .doorway--art{
+  display:block;
+  /* Taller than the drawn gateway (1.55) and the films: the painting carries
+     a wide sky above its arch and a bed of lilies below it, so the gate
+     itself reads small in a box of the same height. */
+  width:min(86vw, calc(var(--dw) * 1.92 * var(--agate-w) / var(--agate-h)));
+  height:auto;
+  aspect-ratio:var(--agate-w) / var(--agate-h);
+  /* Held back until all three pieces are in — a gate that painted its
+     scene before its leaves would stand open before the guest touched it.
+     js/main.js adds `is-ready` when they land. */
+  animation:none;
+  opacity:0;
+}
+.gate--art.is-ready .doorway--art{
+  animation:riseUp 1.3s var(--ease-soft) both;
+  opacity:1;
+}
+
+.agate{
+  position:absolute;inset:0;
+  perspective:1100px;
+  perspective-origin:50% 58%;
+}
+
+/* ── The painting ────────────────────────────────────── */
+/* Two masks, one on each box, so they multiply: the paper fades out top and
+   bottom on the wrapper and at the two sides on the picture itself. Nothing
+   anywhere draws an edge. */
+.agate__paper{
+  position:absolute;inset:0;
+  /* Longer at the top, where there is nothing but sky to lose; short at the
+     foot, where the lilies run to the edge of the paper. */
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 6%,#000 97%,transparent 100%);
+          mask-image:linear-gradient(180deg,transparent 0,#000 6%,#000 97%,transparent 100%);
+}
+.agate__scene{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:fill;              /* the box already carries the painting's ratio */
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent 100%);
+}
+
+/* ── The light on the other side ─────────────────────── */
+/* Sits in the doorway, under the iron, and comes up as the leaves turn — so
+   the openwork is lit from behind before there is any gap to see through. */
+.agate__light{
+  position:absolute;
+  left:25.24%;top:44.39%;width:49.95%;height:42.16%;
+  background:
+    radial-gradient(78% 60% at 50% 62%,
+      rgba(255,252,242,.98) 0%,
+      rgba(255,246,220,.80) 38%,
+      rgba(246,229,189,.34) 66%,
+      rgba(240,220,178,0) 88%);
+  opacity:0;
+  pointer-events:none;
+}
+
+/* ── The two leaves ──────────────────────────────────── */
+/* The same window as the light, split down the middle where the painting's
+   own leaves meet. Each turns on its outer edge, away from the guest, back
+   into the garden. */
+.agate__leaf{
+  position:absolute;
+  top:44.39%;height:42.16%;
+  pointer-events:none;
+  backface-visibility:hidden;
+  transform:translateZ(0);
+}
+.agate__leaf--l{left:25.24%;width:24.92%;transform-origin:0% 50%;}
+.agate__leaf--r{left:50.16%;width:25.03%;transform-origin:100% 50%;}
+
+/* ── Opening ─────────────────────────────────────────── */
+.gate--art.is-open{
+  transition:opacity 1s ease 4.5s, visibility 1s ease 4.5s;
+}
+.gate--art.is-open .agate__leaf--l{animation:artLeafL 3.4s var(--ease-door) forwards .18s;}
+.gate--art.is-open .agate__leaf--r{animation:artLeafR 3.4s var(--ease-door) forwards .18s;}
+.gate--art.is-open .agate__light {animation:artLight 3s   var(--ease-soft) forwards .5s;}
+.gate--art.is-open .gate__glow   {animation:artBurst 2.6s var(--ease-soft) forwards 2.6s;}
+.gate--art.is-open .doorway--art {animation:pullIn   2.9s var(--ease-door) forwards 2.9s;}
+
+/* Heavy leaves swinging back into the light: they turn to all but edge-on and
+   the glare takes what is left of them. */
+@keyframes artLeafL{
+  from{transform:rotateY(0deg)  translateZ(0);   opacity:1;   filter:brightness(1);}
+  to  {transform:rotateY(86deg) translateZ(-4px);opacity:.42; filter:brightness(.9);}
+}
+@keyframes artLeafR{
+  from{transform:rotateY(0deg)   translateZ(0);   opacity:1;   filter:brightness(1);}
+  to  {transform:rotateY(-86deg) translateZ(-4px);opacity:.42; filter:brightness(.9);}
+}
+@keyframes artLight{
+  from{opacity:0;transform:scale(.94);}
+  to  {opacity:1;transform:scale(1.06);}
+}
+/* The films are dark, so `burst` can flood the screen and read as light coming
+   through the door. This painting is already pale — flooded with the same gold
+   it simply vanishes — so its burst is a glow through the opening rather than
+   a flash over everything. */
+@keyframes artBurst{
+  0%  {opacity:0; transform:translate(-50%,-50%) scale(.15);}
+  26% {opacity:.62;}
+  100%{opacity:0; transform:translate(-50%,-50%) scale(1.9);}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .gate--art.is-ready .doorway--art{animation:none;opacity:1;}
+  .gate--art.is-open .agate__leaf--l,
+  .gate--art.is-open .agate__leaf--r,
+  .gate--art.is-open .doorway--art,
+  .gate--art.is-open .gate__glow{animation:none;}
+  .gate--art.is-open .agate__light{animation:none;opacity:1;}
 }
